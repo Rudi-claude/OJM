@@ -14,24 +14,36 @@ import type {
   WeatherData,
   ScoredRestaurant,
   RecommendResponse,
+  Restaurant,
 } from "@/types";
 
-type ChatStep = "greeting" | "weather" | "mood" | "recommend" | "ate" | "done";
+type ChatStep = "greeting" | "mood" | "recommend" | "ate" | "done";
 
-export default function ChatContainer() {
+interface ChatContainerProps {
+  restaurants: Restaurant[];
+  weather: WeatherData | null;
+  mapCenter?: { lat: number; lng: number };
+  searchedAddress: string;
+}
+
+export default function ChatContainer({
+  restaurants: propRestaurants,
+  weather: propWeather,
+  mapCenter,
+  searchedAddress,
+}: ChatContainerProps) {
   const { user } = useAnonymousUser();
   const { addMealLog, fetchMealLogs } = useMealLogs();
 
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [step, setStep] = useState<ChatStep>("greeting");
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [isWeatherLoading, setIsWeatherLoading] = useState(false);
   const [selectedMood, setSelectedMood] = useState<MoodType | undefined>();
   const [recommendations, setRecommendations] = useState<ScoredRestaurant[]>([]);
   const [currentRecommendIndex, setCurrentRecommendIndex] = useState(0);
   const [isRecommendLoading, setIsRecommendLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const hasStartedRef = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,76 +74,53 @@ export default function ChatContainer() {
     []
   );
 
+  // 초기 인사 및 날씨 정보 표시
   useEffect(() => {
-    if (step === "greeting") {
+    if (step === "greeting" && !hasStartedRef.current) {
+      hasStartedRef.current = true;
+
       const timer = setTimeout(() => {
-        addMessage("bot", "안녕하세요! 오늘 점심 뭐 드실지 도와드릴게요. 😊");
+        addMessage(
+          "bot",
+          `안녕하세요! ${searchedAddress} 주변 맛집을 추천해드릴게요. 😊`
+        );
+
         setTimeout(() => {
-          addMessage("bot", "먼저 오늘 날씨를 확인해볼게요...", "weather-badge");
-          setStep("weather");
-          fetchWeather();
-        }, 800);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [step, addMessage]);
+          // 날씨 정보 표시
+          if (propWeather) {
+            addMessage("bot", `오늘 날씨: ${propWeather.description}`);
 
-  const fetchWeather = async () => {
-    setIsWeatherLoading(true);
-    try {
-      let lat = 37.5665;
-      let lng = 126.978;
-
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise<GeolocationPosition>(
-            (resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(resolve, reject, {
-                timeout: 5000,
-              });
+            if (
+              propWeather.recommendations &&
+              propWeather.recommendations.length > 0 &&
+              propWeather.recommendations[0] !== "모든 음식이 좋아요!"
+            ) {
+              setTimeout(() => {
+                addMessage(
+                  "bot",
+                  `이 날씨엔 ${propWeather.recommendations.slice(0, 3).join(", ")} 같은 음식이 좋겠네요!`
+                );
+                setTimeout(() => {
+                  addMessage("bot", "오늘 기분은 어떠세요?", "mood-chips");
+                  setStep("mood");
+                }, 600);
+              }, 600);
+            } else {
+              setTimeout(() => {
+                addMessage("bot", "오늘 기분은 어떠세요?", "mood-chips");
+                setStep("mood");
+              }, 600);
             }
-          );
-          lat = position.coords.latitude;
-          lng = position.coords.longitude;
-        } catch {
-          console.log("위치 정보를 가져올 수 없어 기본 위치 사용");
-        }
-      }
-
-      const response = await fetch(`/api/weather?lat=${lat}&lng=${lng}`);
-      const data = await response.json();
-
-      if (data.weather) {
-        setWeather(data.weather);
-        setTimeout(() => {
-          addMessage("bot", data.weather.description);
-          if (
-            data.weather.recommendations &&
-            data.weather.recommendations.length > 0 &&
-            data.weather.recommendations[0] !== "모든 음식이 좋아요!"
-          ) {
-            addMessage(
-              "bot",
-              `${data.weather.recommendations.slice(0, 3).join(", ")} 같은 음식은 어떨까요?`
-            );
-          }
-          setTimeout(() => {
+          } else {
             addMessage("bot", "오늘 기분은 어떠세요?", "mood-chips");
             setStep("mood");
-          }, 800);
-        }, 500);
-      }
-    } catch (error) {
-      console.error("날씨 조회 실패:", error);
-      addMessage("bot", "날씨 정보를 가져오지 못했어요. 그래도 추천해드릴게요!");
-      setTimeout(() => {
-        addMessage("bot", "오늘 기분은 어떠세요?", "mood-chips");
-        setStep("mood");
-      }, 800);
-    } finally {
-      setIsWeatherLoading(false);
+          }
+        }, 600);
+      }, 300);
+
+      return () => clearTimeout(timer);
     }
-  };
+  }, [step, addMessage, searchedAddress, propWeather]);
 
   const handleMoodSelect = async (mood: MoodType) => {
     setSelectedMood(mood);
@@ -160,7 +149,10 @@ export default function ChatContainer() {
         body: JSON.stringify({
           userId: user?.id,
           mood,
-          weather,
+          weather: propWeather,
+          restaurants: propRestaurants,
+          lat: mapCenter?.lat,
+          lng: mapCenter?.lng,
         }),
       });
 
@@ -175,10 +167,12 @@ export default function ChatContainer() {
           "bot",
           "주변에 추천할 만한 식당을 찾지 못했어요. 다시 시도해볼까요?"
         );
+        setStep("done");
       }
     } catch (error) {
       console.error("추천 조회 실패:", error);
       addMessage("bot", "추천을 가져오는 중 문제가 생겼어요. 다시 시도해주세요.");
+      setStep("done");
     } finally {
       setIsRecommendLoading(false);
     }
@@ -195,7 +189,7 @@ export default function ChatContainer() {
       restaurantId: restaurant.id,
       restaurantName: restaurant.name,
       category: restaurant.category,
-      weather: weather?.condition,
+      weather: propWeather?.condition,
       mood: selectedMood,
     });
 
@@ -232,10 +226,10 @@ export default function ChatContainer() {
   const handleRestart = () => {
     setMessages([]);
     setStep("greeting");
-    setWeather(null);
     setSelectedMood(undefined);
     setRecommendations([]);
     setCurrentRecommendIndex(0);
+    hasStartedRef.current = false;
   };
 
   return (
@@ -248,10 +242,10 @@ export default function ChatContainer() {
           </div>
           <div>
             <h2 className="font-bold text-gray-900">AI 점심 추천</h2>
-            <p className="text-xs text-gray-400">날씨와 기분에 맞는 맛집</p>
+            <p className="text-xs text-gray-400">{searchedAddress} 주변</p>
           </div>
         </div>
-        {weather && <WeatherBadge weather={weather} isLoading={isWeatherLoading} />}
+        {propWeather && <WeatherBadge weather={propWeather} isLoading={false} />}
       </div>
 
       {/* Messages */}
@@ -277,17 +271,6 @@ export default function ChatContainer() {
               )}
           </ChatMessage>
         ))}
-
-        {isWeatherLoading && (
-          <ChatMessage
-            message={{
-              id: "loading",
-              type: "bot",
-              content: "날씨 정보를 가져오는 중...",
-              timestamp: new Date(),
-            }}
-          />
-        )}
 
         {isRecommendLoading && (
           <ChatMessage
