@@ -221,6 +221,7 @@ export default function Home() {
               <RandomRoulette
                 restaurants={restaurants}
                 onSelect={handleRouletteSelect}
+                mapCenter={mapCenter}
               />
             </section>
 

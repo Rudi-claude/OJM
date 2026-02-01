@@ -6,9 +6,10 @@ import { Restaurant } from '@/types';
 interface RandomRouletteProps {
   restaurants: Restaurant[];
   onSelect?: (restaurant: Restaurant | null) => void;
+  mapCenter?: { lat: number; lng: number };
 }
 
-export default function RandomRoulette({ restaurants, onSelect }: RandomRouletteProps) {
+export default function RandomRoulette({ restaurants, onSelect, mapCenter }: RandomRouletteProps) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selected, setSelected] = useState<Restaurant | null>(null);
 
@@ -42,7 +43,10 @@ export default function RandomRoulette({ restaurants, onSelect }: RandomRoulette
     onSelect?.(null);
   }, [restaurants]);
 
-  const walkingTime = selected ? Math.ceil(selected.distance / 67) : 0;
+  const getDirectionsUrl = () => {
+    if (!selected || !mapCenter || !selected.x || !selected.y) return null;
+    return `https://map.kakao.com/link/from/우리회사,${mapCenter.lat},${mapCenter.lng}/to/${encodeURIComponent(selected.name)},${selected.y},${selected.x}`;
+  };
 
   return (
     <div className="w-full max-w-md mx-auto text-center">
@@ -51,23 +55,28 @@ export default function RandomRoulette({ restaurants, onSelect }: RandomRoulette
         <p className="text-white/70 text-sm mb-6">룰렛을 돌려 맛집을 선택하세요</p>
 
         {/* 결과 표시 영역 */}
-        <div className="bg-white rounded-2xl p-6 mb-6 min-h-[120px] flex items-center justify-center shadow-inner">
+        <div className="bg-white rounded-2xl p-6 mb-6 min-h-[140px] flex flex-col items-center justify-center shadow-inner">
           {selected ? (
-            <div className={isSpinning ? 'animate-pulse' : ''}>
+            <div className={isSpinning ? 'animate-pulse' : 'w-full'}>
               <p className="text-2xl font-bold text-gray-800">{selected.name}</p>
               <div className="flex items-center justify-center gap-2 mt-2">
                 <span className="text-sm bg-[#F5F6FF] text-[#6B77E8] px-3 py-1 rounded-full font-medium">
                   {selected.category}
                 </span>
-                <span className="text-sm text-gray-400">{selected.distance}m</span>
+                <span className="text-sm text-gray-400">직선 {selected.distance}m</span>
               </div>
-              {!isSpinning && (
-                <p className="text-sm text-[#6B77E8] mt-3 font-medium flex items-center justify-center gap-1">
+              {!isSpinning && getDirectionsUrl() && (
+                <a
+                  href={getDirectionsUrl()!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-sm font-semibold hover:shadow-lg transition-all"
+                >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
-                  도보 약 {walkingTime}분
-                </p>
+                  도보 길찾기
+                </a>
               )}
             </div>
           ) : (

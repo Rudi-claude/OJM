@@ -133,12 +133,11 @@ export default function KakaoMap({ restaurants, center, selectedRestaurant }: Ka
 
       const marker = new window.kakao.maps.Marker({ position, map });
 
-      const walkingTime = Math.ceil(restaurant.distance / 67);
       const infoContent = `
         <div style="padding:10px 14px;min-width:180px;font-family:sans-serif;">
           <strong style="font-size:14px;color:#333;">${restaurant.name}</strong>
-          <p style="margin:6px 0 0;font-size:12px;color:#666;">${restaurant.category} · ${restaurant.distance}m</p>
-          <p style="margin:4px 0 0;font-size:11px;color:#6B77E8;">🚶 도보 ${walkingTime}분</p>
+          <p style="margin:6px 0 0;font-size:12px;color:#666;">${restaurant.category}</p>
+          <p style="margin:4px 0 0;font-size:11px;color:#888;">직선거리 ${restaurant.distance}m</p>
         </div>
       `;
 
@@ -229,8 +228,8 @@ export default function KakaoMap({ restaurants, center, selectedRestaurant }: Ka
       const customOverlay = new window.kakao.maps.CustomOverlay({
         position: new window.kakao.maps.LatLng(midLat, midLng),
         content: `
-          <div style="padding:8px 12px;background:linear-gradient(135deg,#6B77E8,#8B95FF);color:white;border-radius:20px;font-size:13px;font-weight:bold;box-shadow:0 2px 6px rgba(107,119,232,0.3);">
-            🚶 ${walkingTime}분
+          <div style="padding:8px 12px;background:linear-gradient(135deg,#6B77E8,#8B95FF);color:white;border-radius:20px;font-size:12px;font-weight:bold;box-shadow:0 2px 6px rgba(107,119,232,0.3);">
+            📍 직선 ${selectedRestaurant.distance}m
           </div>
         `,
         yAnchor: 1,
@@ -246,8 +245,9 @@ export default function KakaoMap({ restaurants, center, selectedRestaurant }: Ka
       const infoContent = `
         <div style="padding:12px 16px;min-width:200px;font-family:sans-serif;">
           <strong style="font-size:15px;color:#6B77E8;">🎯 ${selectedRestaurant.name}</strong>
-          <p style="margin:6px 0 0;font-size:12px;color:#666;">${selectedRestaurant.category} · ${selectedRestaurant.distance}m</p>
-          <p style="margin:6px 0 0;font-size:13px;color:#6B77E8;font-weight:bold;">🚶 도보 약 ${walkingTime}분</p>
+          <p style="margin:6px 0 0;font-size:12px;color:#666;">${selectedRestaurant.category}</p>
+          <p style="margin:4px 0 0;font-size:12px;color:#888;">직선거리 ${selectedRestaurant.distance}m</p>
+          <p style="margin:6px 0 0;font-size:11px;color:#6B77E8;">아래 '도보 길찾기' 버튼을 눌러주세요</p>
         </div>
       `;
 
@@ -336,9 +336,22 @@ export default function KakaoMap({ restaurants, center, selectedRestaurant }: Ka
           </div>
         )}
       </div>
-      {selectedRestaurant && (
-        <div className="bg-[#F5F6FF] p-3 text-center text-sm text-[#6B77E8]">
-          🎯 <strong>{selectedRestaurant.name}</strong>까지 경로가 표시되었습니다!
+      {selectedRestaurant && center && (
+        <div className="bg-[#F5F6FF] p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-sm text-[#6B77E8]">
+            🎯 <strong>{selectedRestaurant.name}</strong>까지 직선거리 {selectedRestaurant.distance}m
+          </div>
+          <a
+            href={`https://map.kakao.com/link/from/우리회사,${center.lat},${center.lng}/to/${encodeURIComponent(selectedRestaurant.name)},${selectedRestaurant.y},${selectedRestaurant.x}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-[#6B77E8]/25 transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            도보 길찾기
+          </a>
         </div>
       )}
     </div>
