@@ -21,12 +21,12 @@ export default function MoodChips({
           onClick={() => onSelect(option.type)}
           disabled={disabled}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+            flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium
             transition-all duration-200
             ${
               selectedMood === option.type
-                ? "bg-primary-500 text-white shadow-md"
-                : "bg-white border border-gray-200 text-gray-700 hover:border-primary-300 hover:bg-primary-50"
+                ? "bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white shadow-lg shadow-[#6B77E8]/20"
+                : "bg-white border border-gray-100 text-gray-700 hover:border-[#8B95FF] hover:bg-[#F5F6FF] hover:text-[#6B77E8]"
             }
             ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
           `}

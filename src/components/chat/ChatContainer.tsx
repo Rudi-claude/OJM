@@ -62,11 +62,10 @@ export default function ChatContainer() {
     []
   );
 
-  // 초기 인사
   useEffect(() => {
     if (step === "greeting") {
       const timer = setTimeout(() => {
-        addMessage("bot", "안녕하세요! 오늘 점심 뭐 드실지 도와드릴게요.");
+        addMessage("bot", "안녕하세요! 오늘 점심 뭐 드실지 도와드릴게요. 😊");
         setTimeout(() => {
           addMessage("bot", "먼저 오늘 날씨를 확인해볼게요...", "weather-badge");
           setStep("weather");
@@ -77,11 +76,9 @@ export default function ChatContainer() {
     }
   }, [step, addMessage]);
 
-  // 날씨 조회
   const fetchWeather = async () => {
     setIsWeatherLoading(true);
     try {
-      // 위치 정보 가져오기
       let lat = 37.5665;
       let lng = 126.978;
 
@@ -136,7 +133,6 @@ export default function ChatContainer() {
     }
   };
 
-  // 기분 선택
   const handleMoodSelect = async (mood: MoodType) => {
     setSelectedMood(mood);
     const moodLabel = {
@@ -151,7 +147,6 @@ export default function ChatContainer() {
     await fetchRecommendations(mood);
   };
 
-  // 추천 조회
   const fetchRecommendations = async (mood: MoodType) => {
     setIsRecommendLoading(true);
     try {
@@ -189,7 +184,6 @@ export default function ChatContainer() {
     }
   };
 
-  // "먹었어!" 처리
   const handleAte = async (restaurant: ScoredRestaurant) => {
     if (!user?.id) {
       addMessage("bot", "식사 기록을 저장하려면 잠시 후 다시 시도해주세요.");
@@ -209,7 +203,7 @@ export default function ChatContainer() {
       addMessage("user", `${restaurant.name}에서 먹을게요!`);
       addMessage(
         "bot",
-        `좋은 선택이에요! ${restaurant.name}에서 맛있게 드세요. 다음에 또 도와드릴게요!`
+        `좋은 선택이에요! ${restaurant.name}에서 맛있게 드세요. 🍴`
       );
       setStep("done");
     } else {
@@ -218,7 +212,6 @@ export default function ChatContainer() {
     }
   };
 
-  // "다른 거" 처리
   const handleNext = () => {
     if (currentRecommendIndex < recommendations.length - 1) {
       const nextIndex = currentRecommendIndex + 1;
@@ -236,7 +229,6 @@ export default function ChatContainer() {
     }
   };
 
-  // 다시 시작
   const handleRestart = () => {
     setMessages([]);
     setStep("greeting");
@@ -247,16 +239,16 @@ export default function ChatContainer() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-[#F8F9FC]">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white border-b">
+      <div className="flex items-center justify-between px-4 py-4 bg-white border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-lg">🍽️</span>
+          <div className="w-11 h-11 bg-gradient-to-br from-[#6B77E8] to-[#8B95FF] rounded-2xl flex items-center justify-center shadow-lg shadow-[#6B77E8]/20">
+            <span className="text-white text-xl">🤖</span>
           </div>
           <div>
-            <h2 className="font-bold text-gray-900">오점뭐 봇</h2>
-            <p className="text-xs text-gray-500">점심 메뉴 추천</p>
+            <h2 className="font-bold text-gray-900">AI 점심 추천</h2>
+            <p className="text-xs text-gray-400">날씨와 기분에 맞는 맛집</p>
           </div>
         </div>
         {weather && <WeatherBadge weather={weather} isLoading={isWeatherLoading} />}
@@ -313,10 +305,10 @@ export default function ChatContainer() {
 
       {/* Restart Button */}
       {step === "done" && (
-        <div className="p-4 bg-white border-t">
+        <div className="p-4 bg-white border-t border-gray-100">
           <button
             onClick={handleRestart}
-            className="w-full py-3 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors"
+            className="w-full py-4 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-2xl font-semibold hover:shadow-lg hover:shadow-[#6B77E8]/25 transition-all"
           >
             다시 추천받기
           </button>

@@ -7,22 +7,31 @@ interface CategoryFilterProps {
   onChange: (category: Category) => void;
 }
 
-const categories: Category[] = ['전체', '한식', '중식', '일식', '양식', '분식', '카페'];
+const categories: { name: Category; icon: string }[] = [
+  { name: '전체', icon: '🍽️' },
+  { name: '한식', icon: '🍚' },
+  { name: '중식', icon: '🥟' },
+  { name: '일식', icon: '🍣' },
+  { name: '양식', icon: '🍝' },
+  { name: '분식', icon: '🍜' },
+  { name: '카페', icon: '☕' },
+];
 
 export default function CategoryFilter({ selected, onChange }: CategoryFilterProps) {
   return (
     <div className="flex flex-wrap gap-2 justify-center">
       {categories.map((category) => (
         <button
-          key={category}
-          onClick={() => onChange(category)}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            selected === category
-              ? 'bg-orange-500 text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          key={category.name}
+          onClick={() => onChange(category.name)}
+          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+            selected === category.name
+              ? 'bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white shadow-lg shadow-[#6B77E8]/20'
+              : 'bg-white text-gray-600 hover:bg-[#F5F6FF] hover:text-[#6B77E8] border border-gray-100'
           }`}
         >
-          {category}
+          <span>{category.icon}</span>
+          <span>{category.name}</span>
         </button>
       ))}
     </div>

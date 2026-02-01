@@ -17,12 +17,12 @@ const weatherIcons: Record<WeatherCondition, string> = {
 };
 
 const weatherColors: Record<WeatherCondition, string> = {
-  clear: "bg-yellow-100 text-yellow-800",
-  cloudy: "bg-gray-100 text-gray-800",
-  rain: "bg-blue-100 text-blue-800",
-  snow: "bg-slate-100 text-slate-800",
-  hot: "bg-red-100 text-red-800",
-  cold: "bg-cyan-100 text-cyan-800",
+  clear: "bg-amber-50 text-amber-700 border border-amber-200",
+  cloudy: "bg-gray-50 text-gray-700 border border-gray-200",
+  rain: "bg-blue-50 text-blue-700 border border-blue-200",
+  snow: "bg-slate-50 text-slate-700 border border-slate-200",
+  hot: "bg-rose-50 text-rose-700 border border-rose-200",
+  cold: "bg-cyan-50 text-cyan-700 border border-cyan-200",
 };
 
 export default function WeatherBadge({ weather, isLoading }: WeatherBadgeProps) {
@@ -41,12 +41,12 @@ export default function WeatherBadge({ weather, isLoading }: WeatherBadgeProps) 
 
   return (
     <div
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl shadow-sm ${
         weatherColors[weather.condition]
       }`}
     >
-      <span className="text-lg">{weatherIcons[weather.condition]}</span>
-      <span className="text-sm font-medium">{weather.description}</span>
+      <span className="text-base">{weatherIcons[weather.condition]}</span>
+      <span className="text-xs font-medium">{weather.temperature}°</span>
     </div>
   );
 }

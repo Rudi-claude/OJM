@@ -42,17 +42,17 @@ export default function RecommendCard({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-lg">
       <div className="p-4">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="text-lg font-bold text-gray-900">{restaurant.name}</h3>
-            <span className="inline-block px-2 py-0.5 mt-1 text-xs font-medium bg-primary-100 text-primary-700 rounded-full">
+            <span className="inline-block px-3 py-1 mt-1 text-xs font-medium bg-[#F5F6FF] text-[#6B77E8] rounded-full">
               {restaurant.category}
             </span>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-primary-500">
+            <div className="text-2xl font-bold text-[#6B77E8]">
               {restaurant.score}
               <span className="text-sm font-normal text-gray-400">점</span>
             </div>
@@ -86,7 +86,7 @@ export default function RecommendCard({
         <button
           onClick={handleAte}
           disabled={isAteLoading || isLoading}
-          className="flex-1 px-4 py-3 text-sm font-medium text-primary-600 hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex-1 px-4 py-3 text-sm font-semibold text-[#6B77E8] hover:bg-[#F5F6FF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isAteLoading ? "저장 중..." : "먹었어!"}
         </button>
