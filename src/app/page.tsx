@@ -118,20 +118,21 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F8F9FC]">
-      {/* 헤더 */}
-      <header className="bg-white sticky top-0 z-10 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 py-5">
-          <h1 className="text-2xl font-bold text-center bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] bg-clip-text text-transparent">
-            오점뭐?
-          </h1>
-          <p className="text-center text-gray-400 text-sm mt-1">
-            오늘 점심 뭐 먹지? 고민 끝!
-          </p>
-        </div>
-      </header>
+    <div className="mobile-container">
+      <main className="min-h-screen bg-[#F8F9FC] flex flex-col">
+        {/* 헤더 */}
+        <header className="bg-white sticky top-0 z-10 shadow-sm">
+          <div className="px-4 py-4">
+            <h1 className="text-xl font-bold text-center bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] bg-clip-text text-transparent">
+              오점뭐?
+            </h1>
+            <p className="text-center text-gray-400 text-xs mt-0.5">
+              오늘 점심 뭐 먹지? 고민 끝!
+            </p>
+          </div>
+        </header>
 
-      <div className="max-w-5xl mx-auto px-4 py-6">
+        <div className="flex-1 px-4 py-4 overflow-y-auto">
         {/* Step 1: 주소 검색 */}
         <section className="flex flex-col items-center gap-6 mb-8">
           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
@@ -297,14 +298,15 @@ export default function Home() {
             </p>
           </section>
         )}
-      </div>
+        </div>
 
-      {/* 푸터 */}
-      <footer className="bg-white py-8 mt-8 border-t border-gray-100">
-        <p className="text-center text-gray-400 text-sm">
-          맛집 추천 서비스 | 오점뭐?
-        </p>
-      </footer>
-    </main>
+        {/* 푸터 */}
+        <footer className="bg-white py-4 border-t border-gray-100">
+          <p className="text-center text-gray-400 text-xs">
+            맛집 추천 서비스 | 오점뭐?
+          </p>
+        </footer>
+      </main>
+    </div>
   );
 }

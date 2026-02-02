@@ -1,5 +1,22 @@
-@import "tailwindcss";
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import "tailwindcss";
+
+/* 모바일 웹앱 컨테이너 */
+html, body {
+  background-color: #000000;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.mobile-container {
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-color: #F8F9FC;
+  position: relative;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+}
 
 :root {
   --background: #ffffff;
