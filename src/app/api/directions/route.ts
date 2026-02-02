@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Tmap 보행자 경로 API (Tmap Mobility)
-const TMAP_API_URL = "https://apis.tmap.co.kr/tmap/routes/pedestrian?version=1";
+// Tmap 보행자 경로 API (SK Open API)
+const TMAP_API_URL = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1";
 
 interface TmapFeature {
   type: string;
