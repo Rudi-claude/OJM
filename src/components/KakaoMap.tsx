@@ -84,6 +84,18 @@ export default function KakaoMap({ restaurants, center, selectedRestaurant }: Ka
 
       setIsLoaded(true);
 
+      // 지도 클릭 시 모든 인포윈도우 닫기
+      window.kakao.maps.event.addListener(map, 'click', () => {
+        if (currentInfowindowRef.current) {
+          currentInfowindowRef.current.close();
+          currentInfowindowRef.current = null;
+        }
+        if (selectedInfowindowRef.current) {
+          selectedInfowindowRef.current.close();
+          selectedInfowindowRef.current = null;
+        }
+      });
+
       // 회사 위치 마커
       if (center) {
         const centerPosition = new window.kakao.maps.LatLng(center.lat, center.lng);
@@ -342,6 +354,17 @@ export default function KakaoMap({ restaurants, center, selectedRestaurant }: Ka
         const infowindow = new window.kakao.maps.InfoWindow({ content: infoContent });
         infowindow.open(map, selectedMarkerRef.current);
         selectedInfowindowRef.current = infowindow;
+
+        // 마커 클릭 시 인포윈도우 토글
+        window.kakao.maps.event.addListener(selectedMarkerRef.current, 'click', () => {
+          if (selectedInfowindowRef.current) {
+            selectedInfowindowRef.current.close();
+            selectedInfowindowRef.current = null;
+          } else {
+            infowindow.open(map, selectedMarkerRef.current);
+            selectedInfowindowRef.current = infowindow;
+          }
+        });
       }
 
       // 경로 전체가 보이도록 지도 조정
@@ -395,6 +418,17 @@ export default function KakaoMap({ restaurants, center, selectedRestaurant }: Ka
         const infowindow = new window.kakao.maps.InfoWindow({ content: infoContent });
         infowindow.open(map, selectedMarkerRef.current);
         selectedInfowindowRef.current = infowindow;
+
+        // 마커 클릭 시 인포윈도우 토글
+        window.kakao.maps.event.addListener(selectedMarkerRef.current, 'click', () => {
+          if (selectedInfowindowRef.current) {
+            selectedInfowindowRef.current.close();
+            selectedInfowindowRef.current = null;
+          } else {
+            infowindow.open(map, selectedMarkerRef.current);
+            selectedInfowindowRef.current = infowindow;
+          }
+        });
       }
     }
   }, [walkingRoute, isRouteLoading, selectedRestaurant, center, isLoaded]);
