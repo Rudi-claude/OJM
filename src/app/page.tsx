@@ -59,7 +59,7 @@ export default function Home() {
     setSelectedMode(null);
 
     try {
-      const response = await fetch(`/api/search?address=${encodeURIComponent(address)}&radius=500`);
+      const response = await fetch(`/api/search?address=${encodeURIComponent(address)}&radius=1000`);
       const data = await response.json();
 
       if (!response.ok) {
