@@ -70,34 +70,44 @@ async function searchRestaurants(x: string, y: string, radius: number = 500) {
     return [];
   }
 
-  return data.documents.map((place: any) => {
-    // 카테고리 추출
-    const categoryParts = place.category_name.split(' > ');
-    let categoryName = '기타';
+  // 카페, 술집 제외 필터링
+  const excludeKeywords = ['카페', '커피', '술집', '주점', '호프', '바', '포장마차', '와인', '칵테일', '이자카야'];
 
-    if (categoryParts.length >= 2) {
-      const subCategory = categoryParts[1];
-      if (subCategory.includes('한식')) categoryName = '한식';
-      else if (subCategory.includes('중식') || subCategory.includes('중국')) categoryName = '중식';
-      else if (subCategory.includes('일식') || subCategory.includes('초밥')) categoryName = '일식';
-      else if (subCategory.includes('양식') || subCategory.includes('이탈리안')) categoryName = '양식';
-      else if (subCategory.includes('분식')) categoryName = '분식';
-      else if (subCategory.includes('카페') || subCategory.includes('커피')) categoryName = '카페';
-      else categoryName = subCategory;
-    }
+  return data.documents
+    .filter((place: any) => {
+      const categoryName = place.category_name.toLowerCase();
+      // 제외할 키워드가 포함된 경우 필터링
+      return !excludeKeywords.some(keyword => categoryName.includes(keyword));
+    })
+    .map((place: any) => {
+      // 카테고리 추출
+      const categoryParts = place.category_name.split(' > ');
+      let categoryName = '기타';
 
-    return {
-      id: place.id,
-      name: place.place_name,
-      category: categoryName,
-      address: place.road_address_name || place.address_name,
-      distance: parseInt(place.distance) || 0,
-      phone: place.phone || undefined,
-      placeUrl: place.place_url,
-      x: parseFloat(place.x),
-      y: parseFloat(place.y),
-    };
-  });
+      if (categoryParts.length >= 2) {
+        const subCategory = categoryParts[1];
+        if (subCategory.includes('한식')) categoryName = '한식';
+        else if (subCategory.includes('중식') || subCategory.includes('중국')) categoryName = '중식';
+        else if (subCategory.includes('일식') || subCategory.includes('초밥')) categoryName = '일식';
+        else if (subCategory.includes('양식') || subCategory.includes('이탈리안')) categoryName = '양식';
+        else if (subCategory.includes('분식')) categoryName = '분식';
+        else if (subCategory.includes('패스트푸드') || subCategory.includes('햄버거') || subCategory.includes('피자')) categoryName = '패스트푸드';
+        else if (subCategory.includes('아시안') || subCategory.includes('베트남') || subCategory.includes('태국')) categoryName = '아시안';
+        else categoryName = subCategory;
+      }
+
+      return {
+        id: place.id,
+        name: place.place_name,
+        category: categoryName,
+        address: place.road_address_name || place.address_name,
+        distance: parseInt(place.distance) || 0,
+        phone: place.phone || undefined,
+        placeUrl: place.place_url,
+        x: parseFloat(place.x),
+        y: parseFloat(place.y),
+      };
+    });
 }
 
 export async function GET(request: NextRequest) {

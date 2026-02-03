@@ -14,7 +14,8 @@ const categories: { name: Category; icon: string }[] = [
   { name: '일식', icon: '🍣' },
   { name: '양식', icon: '🍝' },
   { name: '분식', icon: '🍜' },
-  { name: '카페', icon: '☕' },
+  { name: '아시안', icon: '🍜' },
+  { name: '패스트푸드', icon: '🍔' },
 ];
 
 export default function CategoryFilter({ selected, onChange }: CategoryFilterProps) {

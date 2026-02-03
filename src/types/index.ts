@@ -16,7 +16,7 @@ export interface Restaurant {
 }
 
 // 카테고리 타입
-export type Category = '전체' | '한식' | '중식' | '일식' | '양식' | '분식' | '카페';
+export type Category = '전체' | '한식' | '중식' | '일식' | '양식' | '분식' | '아시안' | '패스트푸드';
 
 // 검색 결과 타입
 export interface SearchResult {
