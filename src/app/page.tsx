@@ -160,16 +160,36 @@ export default function Home() {
     setSelectedRestaurant(null);
   };
 
+  const handleReset = () => {
+    setRestaurants([]);
+    setAllRestaurants([]);
+    setSelectedCategory('전체');
+    setIsLoading(false);
+    setSearchedAddress('');
+    setError(null);
+    setMapCenter(undefined);
+    setWeather(null);
+    setExpandedRadius(null);
+    setSelectedMode(null);
+    setSelectedRestaurant(null);
+  };
+
   return (
     <div className="mobile-container">
       <main className="min-h-screen bg-[#F8F9FC] flex flex-col">
         {/* 헤더 */}
         <header className="bg-white sticky top-0 z-10 shadow-sm">
           <div className="px-4 py-4">
-            <h1 className="text-xl font-bold text-center bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] bg-clip-text text-transparent">
+            <h1
+              onClick={handleReset}
+              className="text-xl font-bold text-center bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] bg-clip-text text-transparent cursor-pointer"
+            >
               오점뭐?
             </h1>
-            <p className="text-center text-gray-400 text-xs mt-0.5">
+            <p
+              onClick={handleReset}
+              className="text-center text-gray-400 text-xs mt-0.5 cursor-pointer"
+            >
               오늘 점심 뭐 먹지? 고민 끝!
             </p>
           </div>
