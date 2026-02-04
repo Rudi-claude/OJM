@@ -31,6 +31,9 @@ export default function Home() {
   const [showMap, setShowMap] = useState(true);
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
 
+  // 반경 확장 안내
+  const [expandedRadius, setExpandedRadius] = useState<number | null>(null);
+
   // 주소 검색 완료 여부
   const isAddressSearched = searchedAddress && allRestaurants.length > 0 && mapCenter;
 
@@ -57,11 +60,13 @@ export default function Home() {
       setAllRestaurants([]);
       setMapCenter(undefined);
       setWeather(null);
+      setExpandedRadius(null);
     } else {
       setAllRestaurants(data.restaurants);
       setRestaurants(data.restaurants);
       setMapCenter(data.center);
       setSearchedAddress(data.address || fallbackAddress);
+      setExpandedRadius(data.expandedRadius || null);
       fetchWeather(data.center.lat, data.center.lng);
     }
   };
@@ -172,27 +177,38 @@ export default function Home() {
 
         <div className="flex-1 px-4 py-4 overflow-y-auto">
         {/* Step 1: 주소 검색 */}
-        <section className="flex flex-col items-center gap-6 mb-8">
+        <section className="flex flex-col items-center gap-3 mb-6">
           <SearchBar onSearch={handleSearch} onLocationSearch={handleLocationSearch} isLoading={isLoading} />
 
           {searchedAddress && !error && (
-            <div className="flex items-center gap-3 px-4 py-2 bg-[#F5F6FF] rounded-full">
-              <svg className="w-4 h-4 text-[#6B77E8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              </svg>
-              <span className="text-gray-600 text-sm">
-                <span className="font-medium text-[#6B77E8]">{searchedAddress}</span> 주변
-                {allRestaurants.length > 0 && (
-                  <span className="ml-2 text-[#8B95FF]">({allRestaurants.length}곳)</span>
-                )}
-              </span>
+            <div className="flex flex-wrap items-center justify-center gap-2 px-3 py-2 bg-[#F5F6FF] rounded-xl w-full">
+              <div className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-[#6B77E8] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                </svg>
+                <span className="text-xs text-gray-600">
+                  <span className="font-medium text-[#6B77E8]">{searchedAddress}</span> 주변
+                  {allRestaurants.length > 0 && (
+                    <span className="ml-1 text-[#8B95FF]">({allRestaurants.length}곳)</span>
+                  )}
+                </span>
+              </div>
               {weather && <WeatherBadge weather={weather} isLoading={isWeatherLoading} />}
             </div>
           )}
 
+          {expandedRadius && !error && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-600 rounded-xl text-xs w-full">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              주변 1km 내 결과가 없어 반경 {expandedRadius >= 1000 ? `${(expandedRadius / 1000).toFixed(1)}km` : `${expandedRadius}m`}로 확장했어요
+            </div>
+          )}
+
           {error && (
-            <div className="flex items-center gap-2 px-4 py-3 bg-red-50 text-red-500 rounded-xl text-sm">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-2 px-3 py-2.5 bg-red-50 text-red-500 rounded-xl text-xs w-full">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {error}
@@ -202,34 +218,34 @@ export default function Home() {
 
         {/* Step 2: 모드 선택 (주소 검색 완료 후) */}
         {isAddressSearched && !selectedMode && (
-          <section className="mb-8">
-            <h2 className="text-lg font-bold text-gray-800 text-center mb-6">
+          <section className="mb-6">
+            <h2 className="text-base font-bold text-gray-800 text-center mb-4">
               어떤 방식으로 점심을 고를까요?
             </h2>
-            <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setSelectedMode('roulette')}
-                className="flex flex-col items-center gap-3 p-6 bg-white rounded-2xl border-2 border-gray-100 hover:border-[#6B77E8] hover:shadow-lg transition-all group"
+                className="flex flex-col items-center gap-2.5 p-5 bg-white rounded-2xl border-2 border-gray-100 hover:border-[#6B77E8] hover:shadow-lg transition-all group"
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-[#6B77E8] to-[#8B95FF] rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-[#6B77E8]/20 group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-gradient-to-br from-[#6B77E8] to-[#8B95FF] rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-[#6B77E8]/20 group-hover:scale-110 transition-transform">
                   🎰
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-gray-800">룰렛 돌리기</p>
-                  <p className="text-xs text-gray-400 mt-1">운에 맡기기!</p>
+                  <p className="font-bold text-sm text-gray-800">룰렛 돌리기</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">운에 맡기기!</p>
                 </div>
               </button>
 
               <button
                 onClick={() => setSelectedMode('chat')}
-                className="flex flex-col items-center gap-3 p-6 bg-white rounded-2xl border-2 border-gray-100 hover:border-[#6B77E8] hover:shadow-lg transition-all group"
+                className="flex flex-col items-center gap-2.5 p-5 bg-white rounded-2xl border-2 border-gray-100 hover:border-[#6B77E8] hover:shadow-lg transition-all group"
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-[#6B77E8] to-[#8B95FF] rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-[#6B77E8]/20 group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-gradient-to-br from-[#6B77E8] to-[#8B95FF] rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-[#6B77E8]/20 group-hover:scale-110 transition-transform">
                   🤖
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-gray-800">AI 추천</p>
-                  <p className="text-xs text-gray-400 mt-1">기분에 맞게!</p>
+                  <p className="font-bold text-sm text-gray-800">AI 추천</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">기분에 맞게!</p>
                 </div>
               </button>
             </div>
@@ -242,21 +258,21 @@ export default function Home() {
             {/* 뒤로가기 버튼 */}
             <button
               onClick={handleBackToModeSelect}
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#6B77E8] mb-6 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#6B77E8] mb-4 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               다른 방식으로 선택하기
             </button>
 
             {/* 카테고리 필터 */}
-            <section className="mb-6">
+            <section className="mb-4">
               <CategoryFilter selected={selectedCategory} onChange={handleCategoryChange} />
             </section>
 
             {/* 랜덤 룰렛 */}
-            <section className="mb-8">
+            <section className="mb-6">
               <RandomRoulette
                 restaurants={restaurants}
                 onSelect={handleRouletteSelect}
@@ -265,12 +281,12 @@ export default function Home() {
             </section>
 
             {/* 지도 */}
-            <section className="mb-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-gray-800">지도로 보기</h2>
+            <section className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-base font-bold text-gray-800">지도로 보기</h2>
                 <button
                   onClick={() => setShowMap(!showMap)}
-                  className="text-sm text-[#6B77E8] hover:text-[#5A66D6] font-medium"
+                  className="text-xs text-[#6B77E8] hover:text-[#5A66D6] font-medium"
                 >
                   {showMap ? '숨기기' : '보기'}
                 </button>
@@ -287,11 +303,11 @@ export default function Home() {
             </section>
 
             {/* 맛집 리스트 */}
-            <section>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold text-gray-800">
+            <section className="pb-2">
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-base font-bold text-gray-800">
                   {selectedCategory === '전체' ? '전체' : selectedCategory} 맛집
-                  <span className="ml-2 text-sm font-normal text-[#8B95FF]">
+                  <span className="ml-1.5 text-xs font-normal text-[#8B95FF]">
                     {restaurants.length}곳
                   </span>
                 </h2>
@@ -307,15 +323,15 @@ export default function Home() {
             {/* 뒤로가기 버튼 */}
             <button
               onClick={handleBackToModeSelect}
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#6B77E8] mb-4 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#6B77E8] mb-3 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               다른 방식으로 선택하기
             </button>
 
-            <div className="h-[calc(100vh-280px)] bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="h-[calc(100vh-240px)] bg-white rounded-2xl shadow-lg overflow-hidden">
               <ChatContainer
                 restaurants={allRestaurants}
                 weather={weather}
@@ -328,10 +344,10 @@ export default function Home() {
 
         {/* 주소 검색 전 안내 */}
         {!isAddressSearched && !isLoading && !error && (
-          <section className="text-center py-16">
-            <div className="text-6xl mb-6">🏢</div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">회사 주소를 검색해주세요</h2>
-            <p className="text-gray-400">
+          <section className="text-center py-12">
+            <div className="text-5xl mb-4">🏢</div>
+            <h2 className="text-lg font-bold text-gray-800 mb-1.5">회사 주소를 검색해주세요</h2>
+            <p className="text-sm text-gray-400">
               주소 검색 후 주변 맛집을 추천받을 수 있어요
             </p>
           </section>

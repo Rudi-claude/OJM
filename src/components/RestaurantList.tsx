@@ -11,9 +11,9 @@ interface RestaurantListProps {
 export default function RestaurantList({ restaurants, isLoading }: RestaurantListProps) {
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-gray-100 rounded-xl h-40 animate-pulse" />
+          <div key={i} className="bg-gray-100 rounded-xl h-32 animate-pulse" />
         ))}
       </div>
     );
@@ -31,7 +31,7 @@ export default function RestaurantList({ restaurants, isLoading }: RestaurantLis
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3">
       {restaurants.map((restaurant) => (
         <RestaurantCard key={restaurant.id} restaurant={restaurant} />
       ))}

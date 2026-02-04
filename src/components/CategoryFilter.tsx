@@ -20,12 +20,12 @@ const categories: { name: Category; icon: string }[] = [
 
 export default function CategoryFilter({ selected, onChange }: CategoryFilterProps) {
   return (
-    <div className="flex flex-wrap gap-2 justify-center">
+    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
       {categories.map((category) => (
         <button
           key={category.name}
           onClick={() => onChange(category.name)}
-          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+          className={`px-3 py-2 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 flex-shrink-0 ${
             selected === category.name
               ? 'bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white shadow-lg shadow-[#6B77E8]/20'
               : 'bg-white text-gray-600 hover:bg-[#F5F6FF] hover:text-[#6B77E8] border border-gray-100'

@@ -189,10 +189,22 @@ export async function GET(request: NextRequest) {
 
     console.log('좌표:', { x, y });
 
-    // 주변 음식점 검색
-    const restaurants = await searchRestaurants(x, y, radius);
+    // 주변 음식점 검색 (결과 없으면 반경 자동 확장)
+    const radiusSteps = [radius, 1500, 2000, 3000];
+    let restaurants: any[] = [];
+    let usedRadius = radius;
 
+    for (const r of radiusSteps) {
+      if (r < radius) continue; // 요청 반경보다 작은 단계는 건너뛰기
+      restaurants = await searchRestaurants(x, y, r);
+      usedRadius = r;
+      if (restaurants.length > 0) break;
+      console.log(`반경 ${r}m 결과 없음, 확장 시도...`);
+    }
+
+    const expanded = usedRadius > radius;
     console.log('검색된 음식점 수:', restaurants.length);
+    if (expanded) console.log(`반경 ${radius}m → ${usedRadius}m 확장`);
     console.log('========== API 요청 완료 ==========\n');
 
     return NextResponse.json({
@@ -204,6 +216,7 @@ export async function GET(request: NextRequest) {
         lng: parseFloat(x),
       },
       ...(resolvedAddress && { address: resolvedAddress }),
+      ...(expanded && { expandedRadius: usedRadius }),
     });
   } catch (error) {
     console.error('API 오류:', error);

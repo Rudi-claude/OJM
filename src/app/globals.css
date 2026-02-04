@@ -105,3 +105,12 @@ input:focus, textarea:focus {
   border-color: var(--primary-400);
   box-shadow: 0 0 0 3px rgba(107, 119, 232, 0.1);
 }
+
+/* 스크롤바 숨김 (카테고리 필터 등) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
