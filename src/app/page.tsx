@@ -50,6 +50,22 @@ export default function Home() {
     }
   };
 
+  const handleSearchResult = (data: any, fallbackAddress: string) => {
+    if (data.restaurants.length === 0) {
+      setError('주변에 음식점을 찾지 못했어요. 다른 주소로 검색해보세요.');
+      setRestaurants([]);
+      setAllRestaurants([]);
+      setMapCenter(undefined);
+      setWeather(null);
+    } else {
+      setAllRestaurants(data.restaurants);
+      setRestaurants(data.restaurants);
+      setMapCenter(data.center);
+      setSearchedAddress(data.address || fallbackAddress);
+      fetchWeather(data.center.lat, data.center.lng);
+    }
+  };
+
   const handleSearch = async (address: string) => {
     setIsLoading(true);
     setError(null);
@@ -71,19 +87,41 @@ export default function Home() {
         return;
       }
 
-      if (data.restaurants.length === 0) {
-        setError('주변에 음식점을 찾지 못했어요. 다른 주소로 검색해보세요.');
+      handleSearchResult(data, address);
+    } catch (err) {
+      console.error('검색 오류:', err);
+      setError('검색 중 오류가 발생했어요. 다시 시도해주세요.');
+      setRestaurants([]);
+      setAllRestaurants([]);
+      setMapCenter(undefined);
+      setWeather(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLocationSearch = async (lat: number, lng: number) => {
+    setIsLoading(true);
+    setError(null);
+    setSearchedAddress('현재 위치');
+    setSelectedCategory('전체');
+    setSelectedRestaurant(null);
+    setSelectedMode(null);
+
+    try {
+      const response = await fetch(`/api/search?lat=${lat}&lng=${lng}&radius=1000`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || '검색 중 오류가 발생했어요.');
         setRestaurants([]);
         setAllRestaurants([]);
         setMapCenter(undefined);
         setWeather(null);
-      } else {
-        setAllRestaurants(data.restaurants);
-        setRestaurants(data.restaurants);
-        setMapCenter(data.center);
-        // 날씨도 함께 조회
-        fetchWeather(data.center.lat, data.center.lng);
+        return;
       }
+
+      handleSearchResult(data, '현재 위치');
     } catch (err) {
       console.error('검색 오류:', err);
       setError('검색 중 오류가 발생했어요. 다시 시도해주세요.');
@@ -135,7 +173,7 @@ export default function Home() {
         <div className="flex-1 px-4 py-4 overflow-y-auto">
         {/* Step 1: 주소 검색 */}
         <section className="flex flex-col items-center gap-6 mb-8">
-          <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+          <SearchBar onSearch={handleSearch} onLocationSearch={handleLocationSearch} isLoading={isLoading} />
 
           {searchedAddress && !error && (
             <div className="flex items-center gap-3 px-4 py-2 bg-[#F5F6FF] rounded-full">
