@@ -88,21 +88,27 @@ export function useAuth(): UseAuthReturn {
   // 세션에서 사용자 로드
   const handleSession = useCallback(
     async (session: { user: { id: string; user_metadata: Record<string, unknown> } } | null) => {
-      if (!session?.user) {
+      try {
+        if (!session?.user) {
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+
+        const sessionKakaoName =
+          (session.user.user_metadata?.full_name as string) ||
+          (session.user.user_metadata?.name as string) ||
+          null;
+        setKakaoName(sessionKakaoName);
+
+        const userData = await upsertUser(session.user);
+        setUser(userData);
+      } catch (err) {
+        console.error("handleSession 실패:", err);
         setUser(null);
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      const sessionKakaoName =
-        (session.user.user_metadata?.full_name as string) ||
-        (session.user.user_metadata?.name as string) ||
-        null;
-      setKakaoName(sessionKakaoName);
-
-      const userData = await upsertUser(session.user);
-      setUser(userData);
-      setIsLoading(false);
     },
     [upsertUser]
   );
@@ -111,10 +117,24 @@ export function useAuth(): UseAuthReturn {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
+    // 안전장치: 5초 후에도 로딩 중이면 강제 해제
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000);
+
     // 1. 기존 세션 확인
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleSession(session);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        clearTimeout(timeout);
+        handleSession(session);
+      })
+      .catch((err) => {
+        console.error("getSession 실패:", err);
+        clearTimeout(timeout);
+        setUser(null);
+        setIsLoading(false);
+      });
 
     // 2. 인증 상태 변경 리스너
     const {
@@ -130,6 +150,7 @@ export function useAuth(): UseAuthReturn {
     });
 
     return () => {
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, [handleSession]);
