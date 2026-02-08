@@ -123,22 +123,30 @@ export function useAuth(): UseAuthReturn {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    // 안전장치: 5초 후에도 로딩 중이면 강제 해제
+    // 안전장치: 3초 후에도 로딩 중이면 강제 해제
     const timeout = setTimeout(() => {
+      addLog("타임아웃: 3초 초과");
       setIsLoading(false);
-    }, 5000);
+    }, 3000);
 
     // 1. 기존 세션 확인
     addLog("getSession 호출 시작");
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
+
+    // getSession에 자체 타임아웃 적용
+    const sessionPromise = supabase.auth.getSession();
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("getSession 2초 타임아웃")), 2000)
+    );
+
+    Promise.race([sessionPromise, timeoutPromise])
+      .then((result) => {
+        const session = (result as { data: { session: any } }).data.session;
         clearTimeout(timeout);
-        addLog(`getSession 완료: ${session ? "세션 있음 (user: " + session.user.id.slice(0, 8) + "...)" : "세션 없음"}`);
+        addLog(`getSession 완료: ${session ? "세션 있음" : "세션 없음"}`);
         handleSession(session);
       })
       .catch((err) => {
-        addLog(`getSession 실패: ${err}`);
+        addLog(`getSession 실패/타임아웃: ${err}`);
         clearTimeout(timeout);
         setUser(null);
         setIsLoading(false);
@@ -165,29 +173,11 @@ export function useAuth(): UseAuthReturn {
   }, [handleSession]);
 
   const signInWithKakao = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "kakao",
-        options: {
-          redirectTo: window.location.origin,
-          scopes: "profile_nickname profile_image",
-          skipBrowserRedirect: true,
-        },
-      });
-
-      if (error) {
-        throw new Error(`Supabase 오류: ${error.message}`);
-      }
-
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error(`URL 없음. data: ${JSON.stringify(data)}`);
-      }
-    } catch (err) {
-      if (err instanceof Error) throw err;
-      throw new Error(`알 수 없는 오류: ${String(err)}`);
-    }
+    // Supabase JS 클라이언트 우회 - 직접 OAuth URL로 이동
+    const supabaseUrl = "https://xxhresiqpggsbkbrened.supabase.co";
+    const redirectTo = encodeURIComponent(window.location.origin);
+    const authUrl = `${supabaseUrl}/auth/v1/authorize?provider=kakao&redirect_to=${redirectTo}`;
+    window.location.href = authUrl;
   }, []);
 
   const signOut = useCallback(async () => {
