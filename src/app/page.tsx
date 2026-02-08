@@ -61,7 +61,7 @@ export default function Home() {
   const [toast, setToast] = useState<string | null>(null);
 
   // 사용자 & 식사 기록
-  const { user, isLoading: isUserLoading, updateNickname } = useAnonymousUser();
+  const { user, isLoading: isUserLoading, error: userError, updateNickname, retryInit } = useAnonymousUser();
   const { mealLogs, fetchMealLogs, addMealLog } = useMealLogs();
 
   // 팀
@@ -430,6 +430,18 @@ export default function Home() {
               <div className="text-center py-12 text-gray-400">
                 <div className="w-8 h-8 border-2 border-[#6B77E8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                 <p className="text-sm">사용자 정보를 불러오는 중...</p>
+              </div>
+            ) : userError && !user?.id ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-3">⚠️</div>
+                <p className="text-sm font-medium text-gray-700 mb-1">서버 연결에 문제가 있어요</p>
+                <p className="text-xs text-gray-400 mb-4">{userError}</p>
+                <button
+                  onClick={retryInit}
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-sm font-bold hover:shadow-lg transition-all"
+                >
+                  다시 시도
+                </button>
               </div>
             ) : !user?.nickname ? (
               <NicknameModal onSubmit={updateNickname} />
