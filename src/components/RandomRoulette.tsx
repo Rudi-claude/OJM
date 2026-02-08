@@ -41,10 +41,12 @@ export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMea
     }, 100);
   };
 
+  // restaurants 내용이 실제로 바뀌었을 때만 선택 초기화
+  const restaurantIds = restaurants.map((r) => r.id).join(',');
   useEffect(() => {
     setSelected(null);
     onSelect?.(null);
-  }, [restaurants]);
+  }, [restaurantIds]);
 
   const getDirectionsUrl = () => {
     if (!selected || !mapCenter || !selected.x || !selected.y) return null;
