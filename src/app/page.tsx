@@ -425,8 +425,13 @@ export default function Home() {
         {/* 팀 탭 */}
         {activeTab === 'team' && (
           <section>
-            {/* 닉네임 미설정 */}
-            {!user?.nickname ? (
+            {/* 로딩 중 */}
+            {!user?.id ? (
+              <div className="text-center py-12 text-gray-400">
+                <div className="w-8 h-8 border-2 border-[#6B77E8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-sm">사용자 정보를 불러오는 중...</p>
+              </div>
+            ) : !user.nickname ? (
               <NicknameModal onSubmit={updateNickname} />
             ) : !team ? (
               /* 팀 미가입 */
