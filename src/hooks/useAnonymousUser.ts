@@ -108,9 +108,8 @@ export function useAnonymousUser(): UseAnonymousUserReturn {
       }
     } catch (err) {
       console.error("익명 사용자 초기화 실패:", err);
-      setError(
-        err instanceof Error ? err.message : "사용자 초기화에 실패했습니다."
-      );
+      const errMsg = (err as any)?.message || (err instanceof Error ? err.message : "사용자 초기화에 실패했습니다.");
+      setError(errMsg);
 
       const anonymousId = getAnonymousId();
       if (anonymousId) {
