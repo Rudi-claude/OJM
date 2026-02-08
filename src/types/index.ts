@@ -112,6 +112,28 @@ export interface RecommendResponse {
   message: string;
 }
 
+// 팀 세션/후보 타입
+export type CandidateSource = 'roulette' | 'manual' | 'ai';
+export type SessionStatus = 'collecting' | 'deciding' | 'done';
+
+export interface TeamSession {
+  id: string;
+  teamId: string;
+  startedBy: string | null;
+  status: SessionStatus;
+  createdAt: string;
+}
+
+export interface TeamCandidate {
+  id: string;
+  sessionId: string;
+  addedBy: string | null;
+  addedByNickname?: string;
+  source: CandidateSource;
+  restaurant: Restaurant;
+  addedAt: string;
+}
+
 // 팀 타입
 export interface Team {
   id: string;

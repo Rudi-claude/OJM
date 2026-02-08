@@ -135,6 +135,110 @@ export interface Database {
           }
         ];
       };
+      team_sessions: {
+        Row: {
+          id: string;
+          team_id: string;
+          started_by: string | null;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          started_by?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          team_id?: string;
+          started_by?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "team_sessions_team_id_fkey";
+            columns: ["team_id"];
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "team_sessions_started_by_fkey";
+            columns: ["started_by"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      team_candidates: {
+        Row: {
+          id: string;
+          session_id: string;
+          added_by: string | null;
+          source: string;
+          restaurant_id: string;
+          restaurant_name: string;
+          restaurant_category: string | null;
+          restaurant_address: string | null;
+          restaurant_distance: number | null;
+          restaurant_rating: number | null;
+          restaurant_phone: string | null;
+          restaurant_place_url: string | null;
+          restaurant_x: number | null;
+          restaurant_y: number | null;
+          added_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          added_by?: string | null;
+          source?: string;
+          restaurant_id: string;
+          restaurant_name: string;
+          restaurant_category?: string | null;
+          restaurant_address?: string | null;
+          restaurant_distance?: number | null;
+          restaurant_rating?: number | null;
+          restaurant_phone?: string | null;
+          restaurant_place_url?: string | null;
+          restaurant_x?: number | null;
+          restaurant_y?: number | null;
+          added_at?: string;
+        };
+        Update: {
+          id?: string;
+          session_id?: string;
+          added_by?: string | null;
+          source?: string;
+          restaurant_id?: string;
+          restaurant_name?: string;
+          restaurant_category?: string | null;
+          restaurant_address?: string | null;
+          restaurant_distance?: number | null;
+          restaurant_rating?: number | null;
+          restaurant_phone?: string | null;
+          restaurant_place_url?: string | null;
+          restaurant_x?: number | null;
+          restaurant_y?: number | null;
+          added_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "team_candidates_session_id_fkey";
+            columns: ["session_id"];
+            referencedRelation: "team_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "team_candidates_added_by_fkey";
+            columns: ["added_by"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       team_roulettes: {
         Row: {
           id: string;
