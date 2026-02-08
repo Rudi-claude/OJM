@@ -61,7 +61,7 @@ export default function Home() {
   const [toast, setToast] = useState<string | null>(null);
 
   // 사용자 & 식사 기록
-  const { user, updateNickname } = useAnonymousUser();
+  const { user, isLoading: isUserLoading, updateNickname } = useAnonymousUser();
   const { mealLogs, fetchMealLogs, addMealLog } = useMealLogs();
 
   // 팀
@@ -426,12 +426,12 @@ export default function Home() {
         {activeTab === 'team' && (
           <section>
             {/* 로딩 중 */}
-            {!user?.id ? (
+            {isUserLoading ? (
               <div className="text-center py-12 text-gray-400">
                 <div className="w-8 h-8 border-2 border-[#6B77E8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                 <p className="text-sm">사용자 정보를 불러오는 중...</p>
               </div>
-            ) : !user.nickname ? (
+            ) : !user?.nickname ? (
               <NicknameModal onSubmit={updateNickname} />
             ) : !team ? (
               /* 팀 미가입 */
