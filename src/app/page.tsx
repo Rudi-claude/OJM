@@ -51,10 +51,6 @@ export default function Home() {
   // 탭
   const [activeTab, setActiveTab] = useState<TabType>('nearby');
 
-  // 좋아요 관련
-  const [keywordSearch, setKeywordSearch] = useState('');
-  const [keywordResults, setKeywordResults] = useState<Restaurant[]>([]);
-  const [isKeywordLoading, setIsKeywordLoading] = useState(false);
 
   // 토스트
   const [toast, setToast] = useState<string | null>(null);
@@ -82,6 +78,7 @@ export default function Home() {
   const {
     session: teamSession,
     addCandidate,
+    ensureSessionAndAddCandidate,
     fetchActiveSession,
     subscribeToSession,
     unsubscribe: unsubscribeSession,
@@ -176,44 +173,23 @@ export default function Home() {
     await toggleFavorite(restaurant);
   };
 
-  // 팀 후보 추가 핸들러
+  // 팀 후보 추가 핸들러 (세션 없으면 자동 생성)
   const handleAddTeamCandidate = async (restaurant: Restaurant, source: CandidateSource = 'manual') => {
-    if (!user?.id || !teamSession) return;
-    const success = await addCandidate(teamSession.id, restaurant, user.id, source);
+    if (!user?.id || !team) return;
+    const { success, isNew } = await ensureSessionAndAddCandidate(team.id, restaurant, user.id, source);
     if (success) {
-      showToast(`${restaurant.name}을(를) 팀 후보에 추가했어요`);
+      const msg = isNew
+        ? `새 세션을 시작하고 ${restaurant.name}을(를) 팀 후보에 추가했어요`
+        : `${restaurant.name}을(를) 팀 후보에 추가했어요`;
+      showToast(msg);
     } else {
       showToast('이미 팀 후보에 있어요');
     }
   };
 
-  // 활성 세션에서 후보 추가 가능 여부
-  const canAddTeamCandidate = team && teamSession && teamSession.status === 'collecting';
+  // 팀에 가입되어 있으면 팀공유 가능
+  const canAddTeamCandidate = !!team;
 
-  // 키워드 검색 (식당명)
-  const handleKeywordSearch = async () => {
-    if (!keywordSearch.trim()) return;
-    setIsKeywordLoading(true);
-    try {
-      const response = await fetch(`/api/search?keyword=${encodeURIComponent(keywordSearch.trim())}`);
-      const data = await response.json();
-      if (response.ok && data.restaurants) {
-        setKeywordResults(data.restaurants);
-      } else {
-        setKeywordResults([]);
-      }
-    } catch {
-      setKeywordResults([]);
-    } finally {
-      setIsKeywordLoading(false);
-    }
-  };
-
-  // 검색 결과에서 좋아요 추가
-  const handleAddFavorite = async (restaurant: Restaurant) => {
-    await addFavorite(restaurant);
-    showToast(`${restaurant.name}을(를) 좋아요에 추가했어요`);
-  };
 
   // 주소 검색 완료 여부
   const isAddressSearched = searchedAddress && allRestaurants.length > 0 && mapCenter;
@@ -367,8 +343,6 @@ export default function Home() {
     setSelectedMode(null);
     setSelectedRestaurant(null);
     setActiveTab('nearby');
-    setKeywordSearch('');
-    setKeywordResults([]);
   };
 
   // 팀 나가기 핸들러
@@ -486,7 +460,6 @@ export default function Home() {
                 members={members}
                 userId={user.id}
                 nickname={user.nickname}
-                restaurants={visibleAllRestaurants}
                 mapCenter={mapCenter}
                 onLeaveTeam={handleLeaveTeam}
                 onRefreshMembers={() => fetchMembers()}
@@ -499,64 +472,6 @@ export default function Home() {
         {/* 좋아요 탭 */}
         {activeTab === 'favorites' && (
           <section>
-            {/* 식당 검색해서 추가 */}
-            <div className="mb-4">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={keywordSearch}
-                  onChange={(e) => setKeywordSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleKeywordSearch()}
-                  placeholder="식당 검색해서 추가"
-                  className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#6B77E8] focus:ring-1 focus:ring-[#6B77E8]"
-                />
-                <button
-                  onClick={handleKeywordSearch}
-                  disabled={isKeywordLoading}
-                  className="px-4 py-2.5 bg-[#6B77E8] text-white rounded-xl text-sm font-medium hover:bg-[#5A66D6] transition-colors disabled:opacity-50"
-                >
-                  {isKeywordLoading ? '...' : '검색'}
-                </button>
-              </div>
-            </div>
-
-            {/* 키워드 검색 결과 */}
-            {keywordResults.length > 0 && (
-              <div className="mb-4">
-                <p className="text-xs text-gray-500 font-medium mb-2">검색 결과 ({keywordResults.length}곳)</p>
-                <div className="grid gap-2">
-                  {keywordResults.map((r) => {
-                    const alreadyAdded = isFavorite(r.id);
-                    return (
-                      <div key={r.id} className="flex items-center justify-between bg-white rounded-xl p-3 border border-gray-100">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-bold text-gray-800 truncate">{r.name}</p>
-                          <p className="text-xs text-gray-400 truncate">{r.address}</p>
-                          <span className="text-[10px] bg-[#F5F6FF] text-[#6B77E8] px-1.5 py-0.5 rounded-full font-medium">{r.category}</span>
-                        </div>
-                        <button
-                          onClick={() => !alreadyAdded && handleAddFavorite(r)}
-                          disabled={alreadyAdded}
-                          className={`ml-2 flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                            alreadyAdded
-                              ? 'bg-gray-100 text-gray-400'
-                              : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                          }`}
-                        >
-                          {alreadyAdded ? '추가됨' : '+ 좋아요'}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* 구분선 */}
-            {keywordResults.length > 0 && favoriteRestaurants.length > 0 && (
-              <div className="border-t border-gray-200 my-4" />
-            )}
-
             {/* 좋아요한 식당 목록 */}
             {favoriteRestaurants.length > 0 ? (
               <div>
@@ -564,15 +479,16 @@ export default function Home() {
                 <RestaurantList
                   restaurants={favoriteRestaurants}
                   onFavoriteToggle={handleFavoriteToggle}
-                favoriteIds={favoriteIds}
+                  favoriteIds={favoriteIds}
                   onExcludeChange={handleExcludeChange}
+                  onTeamCandidate={canAddTeamCandidate ? (r) => handleAddTeamCandidate(r, 'manual') : undefined}
                 />
               </div>
             ) : (
               <div className="text-center py-12 text-gray-400">
                 <div className="text-4xl mb-3">👍</div>
                 <p className="text-sm">아직 좋아요한 식당이 없어요</p>
-                <p className="text-xs mt-1 text-gray-300">위에서 식당을 검색해서 추가하거나,<br />주변 맛집 탭에서 좋아요를 눌러보세요!</p>
+                <p className="text-xs mt-1 text-gray-300">주변 맛집 탭에서 좋아요를 눌러보세요!</p>
               </div>
             )}
           </section>

@@ -100,7 +100,7 @@ export default function RecommendCard({
               disabled={isLoading}
               className="flex-1 px-4 py-3 text-sm font-medium text-[#6B77E8] hover:bg-[#F5F6FF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              팀 후보에 추가
+              팀공유
             </button>
           </>
         )}

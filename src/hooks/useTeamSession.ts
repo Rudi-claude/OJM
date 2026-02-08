@@ -206,6 +206,49 @@ export function useTeamSession() {
     []
   );
 
+  const ensureSessionAndAddCandidate = useCallback(
+    async (
+      teamId: string,
+      restaurant: Restaurant,
+      userId: string,
+      source: CandidateSource
+    ): Promise<{ success: boolean; isNew: boolean }> => {
+      try {
+        // 활성 세션(collecting 또는 deciding)이 있는지 확인
+        const { data: existingSession } = await supabase
+          .from("team_sessions")
+          .select("id, team_id, started_by, status, created_at")
+          .eq("team_id", teamId)
+          .in("status", ["collecting", "deciding"])
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        let sessionId: string;
+        let isNew = false;
+
+        if (existingSession) {
+          sessionId = existingSession.id;
+        } else {
+          // 세션 없으면 자동 생성
+          const newSession = await startSession(teamId, userId);
+          if (!newSession) {
+            return { success: false, isNew: false };
+          }
+          sessionId = newSession.id;
+          isNew = true;
+        }
+
+        const success = await addCandidate(sessionId, restaurant, userId, source);
+        return { success, isNew };
+      } catch (err) {
+        console.error("세션 확보 및 후보 추가 실패:", err);
+        return { success: false, isNew: false };
+      }
+    },
+    [startSession, addCandidate]
+  );
+
   const removeCandidate = useCallback(
     async (candidateId: string): Promise<boolean> => {
       try {
@@ -273,6 +316,7 @@ export function useTeamSession() {
     advanceToDeciding,
     closeSession,
     addCandidate,
+    ensureSessionAndAddCandidate,
     removeCandidate,
     subscribeToSession,
     unsubscribe,

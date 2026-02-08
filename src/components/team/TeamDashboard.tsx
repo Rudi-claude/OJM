@@ -7,7 +7,6 @@ import TeamMemberList from './TeamMemberList';
 import TeamRoulette from './TeamRoulette';
 import TeamVoteCreate from './TeamVoteCreate';
 import TeamVoteActive from './TeamVoteActive';
-import TeamCandidateCollector from './TeamCandidateCollector';
 import TeamDecision from './TeamDecision';
 import { useTeamVote } from '@/hooks/useTeamVote';
 import { useTeamSession } from '@/hooks/useTeamSession';
@@ -20,7 +19,6 @@ interface TeamDashboardProps {
   members: TeamMember[];
   userId: string;
   nickname: string;
-  restaurants: Restaurant[];
   mapCenter?: { lat: number; lng: number };
   onLeaveTeam: () => void;
   onRefreshMembers: () => void;
@@ -32,7 +30,6 @@ export default function TeamDashboard({
   members,
   userId,
   nickname,
-  restaurants,
   mapCenter,
   onLeaveTeam,
   onRefreshMembers,
@@ -57,8 +54,6 @@ export default function TeamDashboard({
     unsubscribe: unsubscribeSession,
     fetchActiveSession,
   } = useTeamSession();
-
-  const hasRestaurants = restaurants.length > 0;
 
   // 진입 시 활성 투표 + 세션 확인
   useEffect(() => {
@@ -243,15 +238,7 @@ export default function TeamDashboard({
       </div>
 
       {/* select 모드: 세션 시작 버튼 */}
-      {!hasRestaurants && mode === 'select' && (
-        <div className="text-center py-8 text-gray-400">
-          <div className="text-4xl mb-3">📍</div>
-          <p className="text-sm font-medium">주소를 먼저 검색해주세요</p>
-          <p className="text-xs mt-1 text-gray-300">주변 맛집 탭에서 회사 주소를 검색하면<br/>팀 기능을 사용할 수 있어요</p>
-        </div>
-      )}
-
-      {hasRestaurants && mode === 'select' && (
+      {mode === 'select' && (
         <div className="text-center">
           <h3 className="text-sm font-bold text-gray-800 mb-3">팀원들과 함께 점심을 정해보세요!</h3>
           <button
@@ -261,24 +248,79 @@ export default function TeamDashboard({
           >
             {isSessionLoading ? '시작하는 중...' : '후보 모으기 시작'}
           </button>
-          <p className="text-[11px] text-gray-400 mt-2">팀원들이 각자 후보를 추가하고, 룰렛이나 투표로 결정해요</p>
+          <p className="text-[11px] text-gray-400 mt-2">
+            주변맛집/좋아요 탭에서 &apos;팀공유&apos; 버튼으로도 후보를 추가할 수 있어요
+          </p>
         </div>
       )}
 
-      {/* collecting 모드: 후보 모으기 */}
+      {/* collecting 모드: 후보 리스트 + 다음 단계 */}
       {mode === 'collecting' && session && (
-        <TeamCandidateCollector
-          session={session}
-          candidates={candidates}
-          members={members}
-          userId={userId}
-          restaurants={restaurants}
-          mapCenter={mapCenter}
-          onAddCandidate={addCandidate}
-          onRemoveCandidate={removeCandidate}
-          onAdvance={handleAdvance}
-          onCancel={handleCancelSession}
-        />
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+              <span>📋</span> 후보 목록
+              <span className="text-xs font-normal text-[#8B95FF]">({candidates.length}개)</span>
+            </h3>
+          </div>
+
+          {candidates.length === 0 ? (
+            <div className="text-center py-6 text-gray-400">
+              <div className="text-3xl mb-2">🍽️</div>
+              <p className="text-sm">아직 후보가 없어요</p>
+              <p className="text-xs mt-1 text-gray-300">
+                주변맛집/좋아요 탭에서 &apos;팀공유&apos; 버튼을 눌러보세요
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {candidates.map((c) => {
+                const memberName = members.find((m) => m.userId === c.addedBy)?.nickname || '알 수 없음';
+                const sourceIcon = c.source === 'roulette' ? '🎰' : c.source === 'ai' ? '🤖' : '✋';
+                return (
+                  <div key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-lg flex-shrink-0">{sourceIcon}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{c.restaurant.name}</p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {c.restaurant.category} · {memberName}
+                        </p>
+                      </div>
+                    </div>
+                    {c.addedBy === userId && (
+                      <button
+                        onClick={() => removeCandidate(c.id)}
+                        className="p-1.5 text-gray-300 hover:text-red-400 transition-colors flex-shrink-0"
+                        title="삭제"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={handleCancelSession}
+              className="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+            >
+              초기화
+            </button>
+            <button
+              onClick={handleAdvance}
+              disabled={candidates.length < 2}
+              className="flex-1 py-3 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-sm font-bold hover:shadow-lg transition-all disabled:opacity-50"
+            >
+              다음 단계 →
+            </button>
+          </div>
+        </div>
       )}
 
       {/* deciding 모드: 최종 결정 */}

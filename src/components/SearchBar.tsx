@@ -27,7 +27,7 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading, defau
   // 팀 주소가 설정되면 기본값으로 채워넣기 (수동 입력 전에만)
   useEffect(() => {
     if (defaultAddress && !hasManualInput) {
-      setAddress(defaultAddress);
+      setAddress(`${defaultAddress} (회사주소)`);
     }
   }, [defaultAddress, hasManualInput]);
 
@@ -43,10 +43,11 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading, defau
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (address.trim()) {
+    const cleanAddress = address.replace(/\s*\(회사주소\)\s*$/, '').trim();
+    if (cleanAddress) {
       setLocationError(null);
       setShowRecent(false);
-      onSearch(address.trim());
+      onSearch(cleanAddress);
     }
   };
 
