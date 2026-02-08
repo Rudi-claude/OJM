@@ -15,6 +15,7 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading }: Sea
   const [showRecent, setShowRecent] = useState(false);
   const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
   const [isLocating, setIsLocating] = useState(false);
+  const [locationWarning, setLocationWarning] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,6 +64,7 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading }: Sea
 
   const handleLocationClick = () => {
     setLocationError(null);
+    setLocationWarning(null);
 
     if (!navigator.geolocation) {
       setLocationError('이 브라우저에서는 위치 기능을 지원하지 않습니다.');
@@ -75,8 +77,17 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading }: Sea
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
         setIsLocating(false);
-        onLocationSearch(position.coords.latitude, position.coords.longitude);
+
+        // 정확도가 5km 이상이면 경고 표시
+        if (accuracy > 5000) {
+          setLocationWarning(`위치 정확도가 낮아요 (약 ${Math.round(accuracy / 1000)}km). 위치가 다르면 주소를 직접 입력해주세요.`);
+        } else if (accuracy > 1000) {
+          setLocationWarning('위치가 부정확할 수 있어요. 다르면 주소를 직접 입력해주세요.');
+        }
+
+        onLocationSearch(latitude, longitude);
       },
       (error) => {
         setIsLocating(false);
@@ -88,7 +99,7 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading }: Sea
             setLocationError('위치 정보를 가져올 수 없습니다.');
             break;
           case error.TIMEOUT:
-            setLocationError('위치 요청 시간이 초과되었습니다.');
+            setLocationError('위치 요청 시간이 초과되었습니다. 주소를 직접 입력해주세요.');
             break;
           default:
             setLocationError('위치를 가져오는 중 오류가 발생했습니다.');
@@ -181,6 +192,15 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading }: Sea
               </button>
             </button>
           ))}
+        </div>
+      )}
+
+      {locationWarning && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-600 rounded-xl text-xs">
+          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {locationWarning}
         </div>
       )}
 
