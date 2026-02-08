@@ -9,12 +9,15 @@ interface LoginScreenProps {
 
 export default function LoginScreen({ onKakaoLogin, isLoading }: LoginScreenProps) {
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const handleLogin = async () => {
     setIsSigningIn(true);
+    setLoginError(null);
     try {
       await onKakaoLogin();
-    } catch {
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : '로그인 중 오류가 발생했어요');
       setIsSigningIn(false);
     }
   };
@@ -62,6 +65,11 @@ export default function LoginScreen({ onKakaoLogin, isLoading }: LoginScreenProp
             )}
           </button>
 
+          {loginError && (
+            <p className="text-xs text-red-500 mt-3 bg-red-50 p-2 rounded-lg">
+              {loginError}
+            </p>
+          )}
           <p className="text-xs text-gray-300 mt-4">
             간편하게 로그인하고 팀원들과 함께 점심을 정해보세요
           </p>
