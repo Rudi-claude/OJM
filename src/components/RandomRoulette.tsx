@@ -7,11 +7,13 @@ interface RandomRouletteProps {
   restaurants: Restaurant[];
   onSelect?: (restaurant: Restaurant | null) => void;
   mapCenter?: { lat: number; lng: number };
+  onMealLog?: (restaurant: Restaurant) => void;
 }
 
-export default function RandomRoulette({ restaurants, onSelect, mapCenter }: RandomRouletteProps) {
+export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMealLog }: RandomRouletteProps) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selected, setSelected] = useState<Restaurant | null>(null);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
   const spin = () => {
     if (restaurants.length === 0 || isSpinning) return;
@@ -19,6 +21,7 @@ export default function RandomRoulette({ restaurants, onSelect, mapCenter }: Ran
     setIsSpinning(true);
     setSelected(null);
     onSelect?.(null);
+    setShareStatus(null);
 
     let count = 0;
     const maxCount = 20;
@@ -48,6 +51,44 @@ export default function RandomRoulette({ restaurants, onSelect, mapCenter }: Ran
     return `https://map.kakao.com/link/from/우리회사,${mapCenter.lat},${mapCenter.lng}/to/${encodeURIComponent(selected.name)},${selected.y},${selected.x}`;
   };
 
+  const handleShare = async () => {
+    if (!selected) return;
+
+    const shareText = `오점뭐? 오늘 점심은 ${selected.name}(${selected.category}) - ${selected.distance}m${selected.placeUrl ? `\n카카오맵: ${selected.placeUrl}` : ''}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: '오점뭐? 오늘의 점심',
+          text: shareText,
+        });
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          await copyToClipboard(shareText);
+        }
+      }
+    } else {
+      await copyToClipboard(shareText);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setShareStatus('복사 완료!');
+      setTimeout(() => setShareStatus(null), 2000);
+    } catch {
+      setShareStatus('복사 실패');
+      setTimeout(() => setShareStatus(null), 2000);
+    }
+  };
+
+  const handleMealLog = () => {
+    if (selected) {
+      onMealLog?.(selected);
+    }
+  };
+
   return (
     <div className="w-full text-center">
       <div className="bg-gradient-to-br from-[#6B77E8] to-[#8B95FF] rounded-2xl p-6 shadow-2xl shadow-[#6B77E8]/20">
@@ -65,18 +106,42 @@ export default function RandomRoulette({ restaurants, onSelect, mapCenter }: Ran
                 </span>
                 <span className="text-xs text-gray-400">직선 {selected.distance}m</span>
               </div>
-              {!isSpinning && getDirectionsUrl() && (
-                <a
-                  href={getDirectionsUrl()!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-3 px-3.5 py-2 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-xs font-semibold hover:shadow-lg transition-all"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                  도보 길찾기
-                </a>
+              {!isSpinning && (
+                <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
+                  {getDirectionsUrl() && (
+                    <a
+                      href={getDirectionsUrl()!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-xs font-semibold hover:shadow-lg transition-all"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                      길찾기
+                    </a>
+                  )}
+                  {onMealLog && (
+                    <button
+                      onClick={handleMealLog}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-400 text-white rounded-xl text-xs font-semibold hover:bg-amber-500 transition-all"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      여기서 먹었어요
+                    </button>
+                  )}
+                  <button
+                    onClick={handleShare}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-all"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                    {shareStatus || '공유'}
+                  </button>
+                </div>
               )}
             </div>
           ) : (

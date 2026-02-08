@@ -6,9 +6,13 @@ import RestaurantCard from './RestaurantCard';
 interface RestaurantListProps {
   restaurants: Restaurant[];
   isLoading?: boolean;
+  onExcludeChange?: () => void;
+  onFavoriteChange?: () => void;
+  onMealLog?: (restaurant: Restaurant) => void;
+  recentVisitIds?: string[];
 }
 
-export default function RestaurantList({ restaurants, isLoading }: RestaurantListProps) {
+export default function RestaurantList({ restaurants, isLoading, onExcludeChange, onFavoriteChange, onMealLog, recentVisitIds }: RestaurantListProps) {
   if (isLoading) {
     return (
       <div className="grid gap-3">
@@ -33,7 +37,14 @@ export default function RestaurantList({ restaurants, isLoading }: RestaurantLis
   return (
     <div className="grid gap-3">
       {restaurants.map((restaurant) => (
-        <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+        <RestaurantCard
+          key={restaurant.id}
+          restaurant={restaurant}
+          onExcludeChange={onExcludeChange}
+          onFavoriteChange={onFavoriteChange}
+          onMealLog={onMealLog}
+          isRecentVisit={recentVisitIds?.includes(restaurant.id)}
+        />
       ))}
     </div>
   );

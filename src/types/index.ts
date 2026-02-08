@@ -111,3 +111,61 @@ export interface RecommendResponse {
   restaurants: ScoredRestaurant[];
   message: string;
 }
+
+// 팀 타입
+export interface Team {
+  id: string;
+  name: string;
+  code: string;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+export interface TeamMember {
+  id: string;
+  teamId: string;
+  userId: string;
+  nickname: string | null;
+  joinedAt: string;
+}
+
+export interface TeamRoulette {
+  id: string;
+  teamId: string;
+  startedBy: string | null;
+  restaurant: {
+    id: string | null;
+    name: string | null;
+    category: string | null;
+    address: string | null;
+    distance: number | null;
+    placeUrl: string | null;
+  };
+  status: string;
+  createdAt: string;
+}
+
+export interface TeamVoteOption {
+  id: string;
+  voteId: string;
+  restaurant: {
+    id: string;
+    name: string;
+    category: string | null;
+    address: string | null;
+    distance: number | null;
+    placeUrl: string | null;
+  };
+  pickCount: number;
+  pickedByMe: boolean;
+}
+
+export interface TeamVote {
+  id: string;
+  teamId: string;
+  title: string;
+  createdBy: string | null;
+  status: string;
+  options: TeamVoteOption[];
+  createdAt: string;
+}
