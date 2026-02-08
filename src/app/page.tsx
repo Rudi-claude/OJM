@@ -8,14 +8,17 @@ import RandomRoulette from '@/components/RandomRoulette';
 import KakaoMap from '@/components/KakaoMap';
 import ChatContainer from '@/components/chat/ChatContainer';
 import WeatherBadge from '@/components/WeatherBadge';
+import LoginScreen from '@/components/LoginScreen';
 import NicknameModal from '@/components/team/NicknameModal';
 import TeamJoinCreate from '@/components/team/TeamJoinCreate';
 import TeamDashboard from '@/components/team/TeamDashboard';
-import { Restaurant, Category, WeatherData, MealLog } from '@/types';
-import { addRecentAddress, getExcludes, clearExcludes, getFavorites, getFavoriteIds, addFavorite, toggleFavorite } from '@/lib/storage';
-import { useAnonymousUser } from '@/hooks/useAnonymousUser';
+import { Restaurant, Category, WeatherData, MealLog, CandidateSource } from '@/types';
+import { addRecentAddress, getExcludes, clearExcludes } from '@/lib/storage';
+import { useAuth } from '@/hooks/useAuth';
 import { useMealLogs } from '@/hooks/useMealLogs';
+import { useFavorites } from '@/hooks/useFavorites';
 import { useTeam } from '@/hooks/useTeam';
+import { useTeamSession } from '@/hooks/useTeamSession';
 
 type ModeType = 'roulette' | 'chat';
 type TabType = 'nearby' | 'favorites' | 'team';
@@ -49,7 +52,6 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('nearby');
 
   // 좋아요 관련
-  const [favoriteRestaurants, setFavoriteRestaurants] = useState<Restaurant[]>([]);
   const [keywordSearch, setKeywordSearch] = useState('');
   const [keywordResults, setKeywordResults] = useState<Restaurant[]>([]);
   const [isKeywordLoading, setIsKeywordLoading] = useState(false);
@@ -58,7 +60,8 @@ export default function Home() {
   const [toast, setToast] = useState<string | null>(null);
 
   // 사용자 & 식사 기록
-  const { user, isLoading: isUserLoading, error: userError, updateNickname, retryInit } = useAnonymousUser();
+  const { user, isLoading: isUserLoading, isAuthenticated, kakaoName, signInWithKakao, signOut, updateNickname } = useAuth();
+  const { favorites: favoriteRestaurants, favoriteIds, toggleFavorite, addFavorite, isFavorite } = useFavorites(user?.id);
   const { mealLogs, fetchMealLogs, addMealLog } = useMealLogs();
 
   // 팀
@@ -72,7 +75,28 @@ export default function Home() {
     leaveTeam,
     fetchMembers,
     refreshTeam,
+    updateTeamAddress,
   } = useTeam();
+
+  // 팀 세션
+  const {
+    session: teamSession,
+    addCandidate,
+    fetchActiveSession,
+    subscribeToSession,
+    unsubscribe: unsubscribeSession,
+  } = useTeamSession();
+
+  // 팀이 있으면 세션 구독 시작
+  useEffect(() => {
+    if (team?.id) {
+      fetchActiveSession(team.id);
+      subscribeToSession(team.id);
+    }
+    return () => {
+      unsubscribeSession();
+    };
+  }, [team?.id, fetchActiveSession, subscribeToSession, unsubscribeSession]);
 
   // 사용자 로드 시 식사 기록 조회
   useEffect(() => {
@@ -93,10 +117,6 @@ export default function Home() {
     setExcludedIds(getExcludes());
   }, []);
 
-  // 좋아요 목록 로드
-  useEffect(() => {
-    setFavoriteRestaurants(getFavorites() as Restaurant[]);
-  }, []);
 
   // 최근 3일 내 방문 식당 ID 목록
   const recentVisitIds = mealLogs
@@ -151,10 +171,24 @@ export default function Home() {
     }
   };
 
-  // 좋아요 변경 핸들러
-  const handleFavoriteChange = () => {
-    setFavoriteRestaurants(getFavorites() as Restaurant[]);
+  // 좋아요 변경 핸들러 (RestaurantCard에서 토글 후 호출)
+  const handleFavoriteToggle = async (restaurant: Restaurant) => {
+    await toggleFavorite(restaurant);
   };
+
+  // 팀 후보 추가 핸들러
+  const handleAddTeamCandidate = async (restaurant: Restaurant, source: CandidateSource = 'manual') => {
+    if (!user?.id || !teamSession) return;
+    const success = await addCandidate(teamSession.id, restaurant, user.id, source);
+    if (success) {
+      showToast(`${restaurant.name}을(를) 팀 후보에 추가했어요`);
+    } else {
+      showToast('이미 팀 후보에 있어요');
+    }
+  };
+
+  // 활성 세션에서 후보 추가 가능 여부
+  const canAddTeamCandidate = team && teamSession && teamSession.status === 'collecting';
 
   // 키워드 검색 (식당명)
   const handleKeywordSearch = async () => {
@@ -176,9 +210,8 @@ export default function Home() {
   };
 
   // 검색 결과에서 좋아요 추가
-  const handleAddFavorite = (restaurant: Restaurant) => {
-    addFavorite(restaurant);
-    setFavoriteRestaurants(getFavorites() as Restaurant[]);
+  const handleAddFavorite = async (restaurant: Restaurant) => {
+    await addFavorite(restaurant);
     showToast(`${restaurant.name}을(를) 좋아요에 추가했어요`);
   };
 
@@ -349,6 +382,36 @@ export default function Home() {
     }
   };
 
+  // 로그인 전: LoginScreen 표시
+  if (!isAuthenticated && !isUserLoading) {
+    return <LoginScreen onKakaoLogin={signInWithKakao} />;
+  }
+
+  // 로딩 중
+  if (isUserLoading) {
+    return (
+      <div className="mobile-container">
+        <main className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-[#6B77E8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-sm text-gray-400">로딩 중...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // 닉네임 미설정: NicknameModal 표시
+  if (!user?.nickname) {
+    return (
+      <div className="mobile-container">
+        <main className="min-h-screen bg-[#F8F9FC] flex flex-col items-center justify-center">
+          <NicknameModal onSubmit={updateNickname} defaultNickname={kakaoName || undefined} />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="mobile-container">
       <main className="min-h-screen bg-[#F8F9FC] flex flex-col">
@@ -381,7 +444,7 @@ export default function Home() {
               주변 맛집
             </button>
             <button
-              onClick={() => { setActiveTab('favorites'); setFavoriteRestaurants(getFavorites() as Restaurant[]); }}
+              onClick={() => setActiveTab('favorites')}
               className={`flex-1 py-2.5 text-sm font-medium text-center transition-colors ${
                 activeTab === 'favorites'
                   ? 'text-[#6B77E8] border-b-2 border-[#6B77E8]'
@@ -407,27 +470,7 @@ export default function Home() {
         {/* 팀 탭 */}
         {activeTab === 'team' && (
           <section>
-            {/* 로딩 중 */}
-            {isUserLoading ? (
-              <div className="text-center py-12 text-gray-400">
-                <div className="w-8 h-8 border-2 border-[#6B77E8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-sm">사용자 정보를 불러오는 중...</p>
-              </div>
-            ) : userError && !user?.id ? (
-              <div className="text-center py-12">
-                <div className="text-4xl mb-3">⚠️</div>
-                <p className="text-sm font-medium text-gray-700 mb-1">서버 연결에 문제가 있어요</p>
-                <p className="text-xs text-gray-400 mb-4">{userError}</p>
-                <button
-                  onClick={retryInit}
-                  className="px-6 py-2.5 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-sm font-bold hover:shadow-lg transition-all"
-                >
-                  다시 시도
-                </button>
-              </div>
-            ) : !user?.nickname ? (
-              <NicknameModal onSubmit={updateNickname} />
-            ) : !team ? (
+            {!team ? (
               /* 팀 미가입 */
               <TeamJoinCreate
                 userId={user.id}
@@ -447,6 +490,7 @@ export default function Home() {
                 mapCenter={mapCenter}
                 onLeaveTeam={handleLeaveTeam}
                 onRefreshMembers={() => fetchMembers()}
+                onUpdateAddress={(address, lat, lng) => updateTeamAddress(team.id, address, lat, lng)}
               />
             )}
           </section>
@@ -482,7 +526,7 @@ export default function Home() {
                 <p className="text-xs text-gray-500 font-medium mb-2">검색 결과 ({keywordResults.length}곳)</p>
                 <div className="grid gap-2">
                   {keywordResults.map((r) => {
-                    const alreadyAdded = getFavoriteIds().includes(r.id);
+                    const alreadyAdded = isFavorite(r.id);
                     return (
                       <div key={r.id} className="flex items-center justify-between bg-white rounded-xl p-3 border border-gray-100">
                         <div className="min-w-0 flex-1">
@@ -519,7 +563,8 @@ export default function Home() {
                 <p className="text-xs text-gray-500 font-medium mb-2">내가 좋아요한 식당 ({favoriteRestaurants.length}곳)</p>
                 <RestaurantList
                   restaurants={favoriteRestaurants}
-                  onFavoriteChange={handleFavoriteChange}
+                  onFavoriteToggle={handleFavoriteToggle}
+                favoriteIds={favoriteIds}
                   onExcludeChange={handleExcludeChange}
                 />
               </div>
@@ -537,7 +582,7 @@ export default function Home() {
         {activeTab === 'nearby' && <>
         {/* Step 1: 주소 검색 */}
         <section className="flex flex-col items-center gap-3 mb-6">
-          <SearchBar onSearch={handleSearch} onLocationSearch={handleLocationSearch} isLoading={isLoading} />
+          <SearchBar onSearch={handleSearch} onLocationSearch={handleLocationSearch} isLoading={isLoading} defaultAddress={team?.address || undefined} />
 
           {searchedAddress && !error && (
             <div className="flex flex-wrap items-center justify-center gap-2 px-3 py-2 bg-[#F5F6FF] rounded-xl w-full">
@@ -653,6 +698,7 @@ export default function Home() {
                 onSelect={handleRouletteSelect}
                 mapCenter={mapCenter}
                 onMealLog={handleMealLog}
+                onTeamCandidate={canAddTeamCandidate ? (r) => handleAddTeamCandidate(r, 'roulette') : undefined}
               />
             </section>
 
@@ -692,8 +738,10 @@ export default function Home() {
                 restaurants={visibleRestaurants}
                 isLoading={isLoading}
                 onExcludeChange={handleExcludeChange}
-                onFavoriteChange={handleFavoriteChange}
+                onFavoriteToggle={handleFavoriteToggle}
+                favoriteIds={favoriteIds}
                 onMealLog={handleMealLog}
+                onTeamCandidate={canAddTeamCandidate ? (r) => handleAddTeamCandidate(r, 'manual') : undefined}
                 recentVisitIds={recentVisitIds}
               />
             </section>
@@ -720,6 +768,8 @@ export default function Home() {
                 weather={weather}
                 mapCenter={mapCenter}
                 searchedAddress={searchedAddress}
+                userId={user?.id}
+                onTeamCandidate={canAddTeamCandidate ? (r) => handleAddTeamCandidate(r, 'ai') : undefined}
               />
             </div>
           </>

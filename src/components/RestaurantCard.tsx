@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Restaurant } from '@/types';
-import { getFavoriteIds, toggleFavorite, toggleExclude } from '@/lib/storage';
+import { toggleExclude } from '@/lib/storage';
 
 interface BlogReview {
   title: string;
@@ -15,28 +15,23 @@ interface BlogReview {
 interface RestaurantCardProps {
   restaurant: Restaurant;
   onExcludeChange?: () => void;
-  onFavoriteChange?: () => void;
+  onFavoriteToggle?: (restaurant: Restaurant) => void;
+  isFavorite?: boolean;
   onMealLog?: (restaurant: Restaurant) => void;
+  onTeamCandidate?: (restaurant: Restaurant) => void;
   isRecentVisit?: boolean;
 }
 
-export default function RestaurantCard({ restaurant, onExcludeChange, onFavoriteChange, onMealLog, isRecentVisit }: RestaurantCardProps) {
+export default function RestaurantCard({ restaurant, onExcludeChange, onFavoriteToggle, isFavorite = false, onMealLog, onTeamCandidate, isRecentVisit }: RestaurantCardProps) {
   const { name, category, address, distance, rating, phone, placeUrl } = restaurant;
-  const [isFavorite, setIsFavorite] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
   const [reviews, setReviews] = useState<BlogReview[]>([]);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setIsFavorite(getFavoriteIds().includes(restaurant.id));
-  }, [restaurant.id]);
-
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const nowFavorite = toggleFavorite(restaurant);
-    setIsFavorite(nowFavorite);
-    onFavoriteChange?.();
+    onFavoriteToggle?.(restaurant);
   };
 
   const handleExclude = (e: React.MouseEvent) => {
@@ -48,6 +43,11 @@ export default function RestaurantCard({ restaurant, onExcludeChange, onFavorite
   const handleMealLog = (e: React.MouseEvent) => {
     e.stopPropagation();
     onMealLog?.(restaurant);
+  };
+
+  const handleTeamCandidate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onTeamCandidate?.(restaurant);
   };
 
   const handleToggleReviews = async (e: React.MouseEvent) => {
@@ -188,6 +188,17 @@ export default function RestaurantCard({ restaurant, onExcludeChange, onFavorite
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-xs font-medium">먹었어요</span>
+          </button>
+        )}
+        {onTeamCandidate && (
+          <button
+            onClick={handleTeamCandidate}
+            className="flex items-center gap-1.5 px-3 py-2.5 bg-[#F5F6FF] hover:bg-[#E8EAFF] text-[#6B77E8] rounded-xl transition-colors flex-shrink-0"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="text-xs font-medium">팀 후보</span>
           </button>
         )}
       </div>

@@ -24,6 +24,7 @@ interface TeamDashboardProps {
   mapCenter?: { lat: number; lng: number };
   onLeaveTeam: () => void;
   onRefreshMembers: () => void;
+  onUpdateAddress?: (address: string, lat: number, lng: number) => Promise<boolean>;
 }
 
 export default function TeamDashboard({
@@ -35,8 +36,13 @@ export default function TeamDashboard({
   mapCenter,
   onLeaveTeam,
   onRefreshMembers,
+  onUpdateAddress,
 }: TeamDashboardProps) {
   const [mode, setMode] = useState<TeamMode>('select');
+  const [showAddressInput, setShowAddressInput] = useState(false);
+  const [addressInput, setAddressInput] = useState('');
+  const [isAddressLoading, setIsAddressLoading] = useState(false);
+  const [addressError, setAddressError] = useState<string | null>(null);
   const { activeVote, isLoading: isVoteLoading, createVote, castVote, closeVote, fetchActiveVote, subscribeToVotes, unsubscribe: unsubscribeVotes } = useTeamVote();
   const {
     session,
@@ -151,6 +157,32 @@ export default function TeamDashboard({
     }
   };
 
+  // 팀 주소 저장
+  const handleSaveAddress = async () => {
+    if (!addressInput.trim() || !onUpdateAddress) return;
+    setIsAddressLoading(true);
+    setAddressError(null);
+    try {
+      const response = await fetch(`/api/search?address=${encodeURIComponent(addressInput.trim())}&radius=100`);
+      const data = await response.json();
+      if (!response.ok || !data.center) {
+        setAddressError('주소를 찾을 수 없어요. 다시 입력해주세요.');
+        return;
+      }
+      const success = await onUpdateAddress(addressInput.trim(), data.center.lat, data.center.lng);
+      if (success) {
+        setShowAddressInput(false);
+        setAddressInput('');
+      } else {
+        setAddressError('주소 저장에 실패했어요.');
+      }
+    } catch {
+      setAddressError('주소 검색 중 오류가 발생했어요.');
+    } finally {
+      setIsAddressLoading(false);
+    }
+  };
+
   // 후보 식당만 추출
   const candidateRestaurants = candidates.map((c) => c.restaurant);
 
@@ -160,6 +192,54 @@ export default function TeamDashboard({
 
       <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
         <TeamMemberList members={members} currentUserId={userId} />
+      </div>
+
+      {/* 회사 주소 */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-[#6B77E8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            회사 주소
+          </h3>
+          <button
+            onClick={() => { setShowAddressInput(!showAddressInput); setAddressError(null); }}
+            className="text-xs text-[#6B77E8] hover:text-[#5A66D6] font-medium"
+          >
+            {team.address ? '변경' : '설정'}
+          </button>
+        </div>
+        {team.address ? (
+          <p className="text-sm text-gray-600">{team.address}</p>
+        ) : (
+          <p className="text-xs text-gray-400">주소가 설정되지 않았어요</p>
+        )}
+        {showAddressInput && (
+          <div className="mt-3 space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={addressInput}
+                onChange={(e) => setAddressInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveAddress()}
+                placeholder="회사 주소를 입력하세요"
+                className="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#6B77E8] focus:ring-1 focus:ring-[#6B77E8]"
+              />
+              <button
+                onClick={handleSaveAddress}
+                disabled={isAddressLoading || !addressInput.trim()}
+                className="px-4 py-2.5 bg-[#6B77E8] text-white rounded-xl text-sm font-medium hover:bg-[#5A66D6] transition-colors disabled:opacity-50"
+              >
+                {isAddressLoading ? '...' : '저장'}
+              </button>
+            </div>
+            {addressError && (
+              <p className="text-xs text-red-500">{addressError}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* select 모드: 세션 시작 버튼 */}

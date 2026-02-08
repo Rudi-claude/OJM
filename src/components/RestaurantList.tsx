@@ -7,12 +7,14 @@ interface RestaurantListProps {
   restaurants: Restaurant[];
   isLoading?: boolean;
   onExcludeChange?: () => void;
-  onFavoriteChange?: () => void;
+  onFavoriteToggle?: (restaurant: Restaurant) => void;
+  favoriteIds?: string[];
   onMealLog?: (restaurant: Restaurant) => void;
+  onTeamCandidate?: (restaurant: Restaurant) => void;
   recentVisitIds?: string[];
 }
 
-export default function RestaurantList({ restaurants, isLoading, onExcludeChange, onFavoriteChange, onMealLog, recentVisitIds }: RestaurantListProps) {
+export default function RestaurantList({ restaurants, isLoading, onExcludeChange, onFavoriteToggle, favoriteIds, onMealLog, onTeamCandidate, recentVisitIds }: RestaurantListProps) {
   if (isLoading) {
     return (
       <div className="grid gap-3">
@@ -41,8 +43,10 @@ export default function RestaurantList({ restaurants, isLoading, onExcludeChange
           key={restaurant.id}
           restaurant={restaurant}
           onExcludeChange={onExcludeChange}
-          onFavoriteChange={onFavoriteChange}
+          onFavoriteToggle={onFavoriteToggle}
+          isFavorite={favoriteIds?.includes(restaurant.id) ?? false}
           onMealLog={onMealLog}
+          onTeamCandidate={onTeamCandidate}
           isRecentVisit={recentVisitIds?.includes(restaurant.id)}
         />
       ))}

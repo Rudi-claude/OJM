@@ -59,7 +59,7 @@ export function useTeam() {
         const { data: teamData, error: teamError } = await supabase
           .from("teams")
           .insert({ name, code, created_by: userId })
-          .select("id, name, code, created_by, created_at")
+          .select("id, name, code, created_by, created_at, address, address_lat, address_lng")
           .single();
 
         if (teamError) throw teamError;
@@ -78,6 +78,9 @@ export function useTeam() {
           code: teamData.code,
           createdBy: teamData.created_by,
           createdAt: teamData.created_at,
+          address: teamData.address,
+          addressLat: teamData.address_lat,
+          addressLng: teamData.address_lng,
         };
 
         setTeam(newTeam);
@@ -104,7 +107,7 @@ export function useTeam() {
 
         const { data: teamData, error: teamError } = await supabase
           .from("teams")
-          .select("id, name, code, created_by, created_at")
+          .select("id, name, code, created_by, created_at, address, address_lat, address_lng")
           .eq("code", upperCode)
           .single();
 
@@ -135,6 +138,9 @@ export function useTeam() {
           code: teamData.code,
           createdBy: teamData.created_by,
           createdAt: teamData.created_at,
+          address: teamData.address,
+          addressLat: teamData.address_lat,
+          addressLng: teamData.address_lng,
         };
 
         setTeam(joinedTeam);
@@ -194,7 +200,7 @@ export function useTeam() {
         // DB에서 멤버십 검증
         const { data: membership } = await supabase
           .from("team_members")
-          .select("id, teams(id, name, code, created_by, created_at)")
+          .select("id, teams(id, name, code, created_by, created_at, address, address_lat, address_lng)")
           .eq("team_id", stored.id)
           .eq("user_id", userId)
           .single();
@@ -214,6 +220,9 @@ export function useTeam() {
           code: t.code,
           createdBy: t.created_by,
           createdAt: t.created_at,
+          address: t.address,
+          addressLat: t.address_lat,
+          addressLng: t.address_lng,
         };
 
         setTeam(verified);
@@ -231,6 +240,28 @@ export function useTeam() {
     [fetchMembers]
   );
 
+  const updateTeamAddress = useCallback(
+    async (teamId: string, address: string, lat: number, lng: number): Promise<boolean> => {
+      try {
+        const { error: updateError } = await supabase
+          .from("teams")
+          .update({ address, address_lat: lat, address_lng: lng })
+          .eq("id", teamId);
+
+        if (updateError) throw updateError;
+
+        setTeam((prev) =>
+          prev ? { ...prev, address, addressLat: lat, addressLng: lng } : null
+        );
+        return true;
+      } catch (err) {
+        console.error("팀 주소 업데이트 실패:", err);
+        return false;
+      }
+    },
+    []
+  );
+
   return {
     team,
     members,
@@ -241,5 +272,6 @@ export function useTeam() {
     leaveTeam,
     fetchMembers,
     refreshTeam,
+    updateTeamAddress,
   };
 }

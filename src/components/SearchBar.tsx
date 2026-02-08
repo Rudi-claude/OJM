@@ -7,10 +7,12 @@ interface SearchBarProps {
   onSearch: (address: string) => void;
   onLocationSearch?: (lat: number, lng: number) => void;
   isLoading?: boolean;
+  defaultAddress?: string;
 }
 
-export default function SearchBar({ onSearch, onLocationSearch, isLoading }: SearchBarProps) {
+export default function SearchBar({ onSearch, onLocationSearch, isLoading, defaultAddress }: SearchBarProps) {
   const [address, setAddress] = useState('');
+  const [hasManualInput, setHasManualInput] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showRecent, setShowRecent] = useState(false);
   const [recentAddresses, setRecentAddresses] = useState<string[]>([]);
@@ -21,6 +23,13 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading }: Sea
   useEffect(() => {
     setRecentAddresses(getRecentAddresses());
   }, []);
+
+  // 팀 주소가 설정되면 기본값으로 채워넣기 (수동 입력 전에만)
+  useEffect(() => {
+    if (defaultAddress && !hasManualInput) {
+      setAddress(defaultAddress);
+    }
+  }, [defaultAddress, hasManualInput]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -132,7 +141,7 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading }: Sea
             <input
               type="text"
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={(e) => { setAddress(e.target.value); setHasManualInput(true); }}
               onFocus={handleFocus}
               placeholder="회사 주소를 입력하세요"
               className="flex-1 py-2.5 text-sm bg-transparent text-gray-800 placeholder-gray-400 focus:outline-none min-w-0"

@@ -4,10 +4,11 @@ import { useState } from 'react';
 
 interface NicknameModalProps {
   onSubmit: (nickname: string) => Promise<boolean>;
+  defaultNickname?: string;
 }
 
-export default function NicknameModal({ onSubmit }: NicknameModalProps) {
-  const [nickname, setNickname] = useState('');
+export default function NicknameModal({ onSubmit, defaultNickname }: NicknameModalProps) {
+  const [nickname, setNickname] = useState(defaultNickname || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

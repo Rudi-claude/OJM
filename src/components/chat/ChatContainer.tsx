@@ -6,7 +6,6 @@ import ChatMessage from "./ChatMessage";
 import MoodChips from "./MoodChips";
 import RecommendCard from "./RecommendCard";
 import WeatherBadge from "../WeatherBadge";
-import { useAnonymousUser } from "@/hooks/useAnonymousUser";
 import { useMealLogs } from "@/hooks/useMealLogs";
 import type {
   ChatMessage as ChatMessageType,
@@ -24,6 +23,8 @@ interface ChatContainerProps {
   weather: WeatherData | null;
   mapCenter?: { lat: number; lng: number };
   searchedAddress: string;
+  userId?: string;
+  onTeamCandidate?: (restaurant: Restaurant) => void;
 }
 
 export default function ChatContainer({
@@ -31,8 +32,9 @@ export default function ChatContainer({
   weather: propWeather,
   mapCenter,
   searchedAddress,
+  userId,
+  onTeamCandidate,
 }: ChatContainerProps) {
-  const { user } = useAnonymousUser();
   const { addMealLog, fetchMealLogs } = useMealLogs();
 
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
@@ -139,15 +141,15 @@ export default function ChatContainer({
   const fetchRecommendations = async (mood: MoodType) => {
     setIsRecommendLoading(true);
     try {
-      if (user?.id) {
-        await fetchMealLogs(user.id, 7);
+      if (userId) {
+        await fetchMealLogs(userId, 7);
       }
 
       const response = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: user?.id,
+          userId,
           mood,
           weather: propWeather,
           restaurants: propRestaurants,
@@ -179,13 +181,13 @@ export default function ChatContainer({
   };
 
   const handleAte = async (restaurant: ScoredRestaurant) => {
-    if (!user?.id) {
+    if (!userId) {
       addMessage("bot", "식사 기록을 저장하려면 잠시 후 다시 시도해주세요.");
       return;
     }
 
     const success = await addMealLog({
-      userId: user.id,
+      userId,
       restaurantId: restaurant.id,
       restaurantName: restaurant.name,
       category: restaurant.category,
@@ -266,6 +268,7 @@ export default function ChatContainer({
                   currentIndex={currentRecommendIndex}
                   onAte={handleAte}
                   onNext={handleNext}
+                  onTeamCandidate={onTeamCandidate ? (r) => onTeamCandidate(r as Restaurant) : undefined}
                   isLoading={isRecommendLoading}
                 />
               )}

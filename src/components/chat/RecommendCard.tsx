@@ -8,6 +8,7 @@ interface RecommendCardProps {
   currentIndex?: number;
   onAte?: (restaurant: ScoredRestaurant) => void;
   onNext?: () => void;
+  onTeamCandidate?: (restaurant: ScoredRestaurant) => void;
   isLoading?: boolean;
 }
 
@@ -16,6 +17,7 @@ export default function RecommendCard({
   currentIndex = 0,
   onAte,
   onNext,
+  onTeamCandidate,
   isLoading,
 }: RecommendCardProps) {
   const [isAteLoading, setIsAteLoading] = useState(false);
@@ -90,6 +92,18 @@ export default function RecommendCard({
         >
           {isAteLoading ? "저장 중..." : "먹었어!"}
         </button>
+        {onTeamCandidate && (
+          <>
+            <div className="w-px bg-gray-100" />
+            <button
+              onClick={() => onTeamCandidate(restaurant)}
+              disabled={isLoading}
+              className="flex-1 px-4 py-3 text-sm font-medium text-[#6B77E8] hover:bg-[#F5F6FF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              팀 후보에 추가
+            </button>
+          </>
+        )}
         {hasMore && (
           <>
             <div className="w-px bg-gray-100" />

@@ -12,20 +12,23 @@ export interface Database {
       users: {
         Row: {
           id: string;
-          anonymous_id: string;
+          anonymous_id: string | null;
           nickname: string | null;
+          avatar_url: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
-          anonymous_id: string;
+          anonymous_id?: string | null;
           nickname?: string | null;
+          avatar_url?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
-          anonymous_id?: string;
+          anonymous_id?: string | null;
           nickname?: string | null;
+          avatar_url?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -77,6 +80,9 @@ export interface Database {
           code: string;
           created_by: string | null;
           created_at: string;
+          address: string | null;
+          address_lat: number | null;
+          address_lng: number | null;
         };
         Insert: {
           id?: string;
@@ -84,6 +90,9 @@ export interface Database {
           code: string;
           created_by?: string | null;
           created_at?: string;
+          address?: string | null;
+          address_lat?: number | null;
+          address_lng?: number | null;
         };
         Update: {
           id?: string;
@@ -91,6 +100,9 @@ export interface Database {
           code?: string;
           created_by?: string | null;
           created_at?: string;
+          address?: string | null;
+          address_lat?: number | null;
+          address_lng?: number | null;
         };
         Relationships: [
           {
@@ -414,6 +426,58 @@ export interface Database {
           },
           {
             foreignKeyName: "team_vote_picks_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      user_favorites: {
+        Row: {
+          id: string;
+          user_id: string;
+          restaurant_id: string;
+          restaurant_name: string;
+          restaurant_category: string | null;
+          restaurant_address: string | null;
+          restaurant_rating: number | null;
+          restaurant_phone: string | null;
+          restaurant_place_url: string | null;
+          restaurant_x: number | null;
+          restaurant_y: number | null;
+          added_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          restaurant_id: string;
+          restaurant_name: string;
+          restaurant_category?: string | null;
+          restaurant_address?: string | null;
+          restaurant_rating?: number | null;
+          restaurant_phone?: string | null;
+          restaurant_place_url?: string | null;
+          restaurant_x?: number | null;
+          restaurant_y?: number | null;
+          added_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          restaurant_id?: string;
+          restaurant_name?: string;
+          restaurant_category?: string | null;
+          restaurant_address?: string | null;
+          restaurant_rating?: number | null;
+          restaurant_phone?: string | null;
+          restaurant_place_url?: string | null;
+          restaurant_x?: number | null;
+          restaurant_y?: number | null;
+          added_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_favorites_user_id_fkey";
             columns: ["user_id"];
             referencedRelation: "users";
             referencedColumns: ["id"];

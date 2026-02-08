@@ -134,6 +134,13 @@ export interface TeamCandidate {
   addedAt: string;
 }
 
+// 사용자 타입
+export interface User {
+  id: string;
+  nickname: string | null;
+  avatarUrl?: string | null;
+}
+
 // 팀 타입
 export interface Team {
   id: string;
@@ -141,6 +148,9 @@ export interface Team {
   code: string;
   createdBy: string | null;
   createdAt: string;
+  address?: string | null;
+  addressLat?: number | null;
+  addressLng?: number | null;
 }
 
 export interface TeamMember {
