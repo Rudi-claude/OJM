@@ -10,6 +10,7 @@ interface UseAuthReturn {
   isLoading: boolean;
   isAuthenticated: boolean;
   kakaoName: string | null;
+  debugLog: string[];
   signInWithKakao: () => Promise<void>;
   signOut: () => Promise<void>;
   updateNickname: (nickname: string) => Promise<boolean>;
@@ -19,7 +20,12 @@ export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [kakaoName, setKakaoName] = useState<string | null>(null);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
   const initializedRef = useRef(false);
+
+  const addLog = useCallback((msg: string) => {
+    setDebugLog((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`]);
+  }, []);
 
   // users 테이블에 upsert (기존 닉네임이 있으면 유지)
   const upsertUser = useCallback(
@@ -123,14 +129,16 @@ export function useAuth(): UseAuthReturn {
     }, 5000);
 
     // 1. 기존 세션 확인
+    addLog("getSession 호출 시작");
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
         clearTimeout(timeout);
+        addLog(`getSession 완료: ${session ? "세션 있음 (user: " + session.user.id.slice(0, 8) + "...)" : "세션 없음"}`);
         handleSession(session);
       })
       .catch((err) => {
-        console.error("getSession 실패:", err);
+        addLog(`getSession 실패: ${err}`);
         clearTimeout(timeout);
         setUser(null);
         setIsLoading(false);
@@ -140,6 +148,7 @@ export function useAuth(): UseAuthReturn {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      addLog(`onAuthStateChange: ${event}`);
       if (event === "SIGNED_IN" && session?.user) {
         setIsLoading(true);
         await handleSession(session);
@@ -220,6 +229,7 @@ export function useAuth(): UseAuthReturn {
     isLoading,
     isAuthenticated: !!user,
     kakaoName,
+    debugLog,
     signInWithKakao,
     signOut,
     updateNickname,
