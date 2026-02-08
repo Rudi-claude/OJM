@@ -8,9 +8,10 @@ interface RandomRouletteProps {
   onSelect?: (restaurant: Restaurant | null) => void;
   mapCenter?: { lat: number; lng: number };
   onMealLog?: (restaurant: Restaurant) => void;
+  onTeamVote?: (restaurant: Restaurant) => void;
 }
 
-export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMealLog }: RandomRouletteProps) {
+export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMealLog, onTeamVote }: RandomRouletteProps) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selected, setSelected] = useState<Restaurant | null>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
@@ -143,6 +144,17 @@ export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMea
                     </svg>
                     {shareStatus || '공유'}
                   </button>
+                  {onTeamVote && (
+                    <button
+                      onClick={() => onTeamVote(selected!)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#F5F6FF] text-[#6B77E8] rounded-xl text-xs font-semibold hover:bg-[#E8EAFF] transition-all"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      팀 투표에 올리기
+                    </button>
+                  )}
                 </div>
               )}
             </div>

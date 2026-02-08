@@ -54,6 +54,9 @@ export default function Home() {
   const [keywordResults, setKeywordResults] = useState<Restaurant[]>([]);
   const [isKeywordLoading, setIsKeywordLoading] = useState(false);
 
+  // 팀 투표 사전선택 (룰렛에서 넘어올 때)
+  const [teamVotePreselectedIds, setTeamVotePreselectedIds] = useState<string[]>([]);
+
   // 토스트
   const [toast, setToast] = useState<string | null>(null);
 
@@ -338,6 +341,21 @@ export default function Home() {
     setKeywordResults([]);
   };
 
+  // 룰렛 결과를 팀 투표로 올리기
+  const handleTeamVoteFromRoulette = (restaurant: Restaurant) => {
+    if (!user?.nickname) {
+      showToast('팀 탭에서 닉네임을 먼저 설정해주세요');
+      return;
+    }
+    if (!team) {
+      showToast('팀 탭에서 팀에 먼저 참여해주세요');
+      return;
+    }
+    setTeamVotePreselectedIds([restaurant.id]);
+    setActiveTab('team');
+    showToast(`${restaurant.name}이(가) 투표 후보에 추가됐어요`);
+  };
+
   // 팀 나가기 핸들러
   const handleLeaveTeam = async () => {
     if (!user?.id) return;
@@ -430,6 +448,8 @@ export default function Home() {
                 mapCenter={mapCenter}
                 onLeaveTeam={handleLeaveTeam}
                 onRefreshMembers={() => fetchMembers()}
+                preselectedVoteIds={teamVotePreselectedIds}
+                onClearPreselected={() => setTeamVotePreselectedIds([])}
               />
             )}
           </section>
@@ -636,6 +656,7 @@ export default function Home() {
                 onSelect={handleRouletteSelect}
                 mapCenter={mapCenter}
                 onMealLog={handleMealLog}
+                onTeamVote={team ? handleTeamVoteFromRoulette : undefined}
               />
             </section>
 

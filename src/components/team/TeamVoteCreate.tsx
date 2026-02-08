@@ -7,13 +7,14 @@ interface TeamVoteCreateProps {
   teamId: string;
   userId: string;
   restaurants: Restaurant[];
+  preselectedIds?: string[];
   onCreateVote: (teamId: string, title: string, restaurants: Restaurant[], userId: string) => Promise<TeamVote | null>;
   onCancel: () => void;
 }
 
-export default function TeamVoteCreate({ teamId, userId, restaurants, onCreateVote, onCancel }: TeamVoteCreateProps) {
+export default function TeamVoteCreate({ teamId, userId, restaurants, preselectedIds, onCreateVote, onCancel }: TeamVoteCreateProps) {
   const [title, setTitle] = useState('오늘 점심 투표');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(preselectedIds || []));
   const [isCreating, setIsCreating] = useState(false);
 
   const toggleSelect = (id: string) => {

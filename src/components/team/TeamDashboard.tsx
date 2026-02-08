@@ -20,6 +20,8 @@ interface TeamDashboardProps {
   mapCenter?: { lat: number; lng: number };
   onLeaveTeam: () => void;
   onRefreshMembers: () => void;
+  preselectedVoteIds?: string[];
+  onClearPreselected?: () => void;
 }
 
 export default function TeamDashboard({
@@ -31,6 +33,8 @@ export default function TeamDashboard({
   mapCenter,
   onLeaveTeam,
   onRefreshMembers,
+  preselectedVoteIds,
+  onClearPreselected,
 }: TeamDashboardProps) {
   const [mode, setMode] = useState<TeamMode>('select');
   const { activeVote, isLoading: isVoteLoading, createVote, castVote, closeVote, fetchActiveVote, subscribeToVotes, unsubscribe: unsubscribeVotes } = useTeamVote();
@@ -55,6 +59,13 @@ export default function TeamDashboard({
       setMode('select');
     }
   }, [activeVote, mode]);
+
+  // 룰렛에서 팀 투표로 넘어온 경우 자동으로 투표 만들기 화면
+  useEffect(() => {
+    if (preselectedVoteIds && preselectedVoteIds.length > 0) {
+      setMode('vote-create');
+    }
+  }, [preselectedVoteIds]);
 
   const handleNewVote = () => {
     setMode('vote-create');
@@ -149,12 +160,14 @@ export default function TeamDashboard({
             teamId={team.id}
             userId={userId}
             restaurants={restaurants}
+            preselectedIds={preselectedVoteIds}
             onCreateVote={async (tId, title, rests, uId) => {
               const result = await createVote(tId, title, rests, uId);
               if (result) handleVoteCreated();
+              onClearPreselected?.();
               return result;
             }}
-            onCancel={() => setMode('select')}
+            onCancel={() => { setMode('select'); onClearPreselected?.(); }}
           />
         </div>
       )}
