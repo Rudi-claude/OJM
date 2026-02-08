@@ -156,24 +156,28 @@ export function useAuth(): UseAuthReturn {
   }, [handleSession]);
 
   const signInWithKakao = useCallback(async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "kakao",
-      options: {
-        redirectTo: window.location.origin,
-        scopes: "profile_nickname profile_image",
-        skipBrowserRedirect: true,
-      },
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "kakao",
+        options: {
+          redirectTo: window.location.origin,
+          scopes: "profile_nickname profile_image",
+          skipBrowserRedirect: true,
+        },
+      });
 
-    if (error) {
-      console.error("카카오 로그인 실패:", error);
-      throw error;
-    }
+      if (error) {
+        throw new Error(`Supabase 오류: ${error.message}`);
+      }
 
-    if (data?.url) {
-      window.location.href = data.url;
-    } else {
-      throw new Error("로그인 URL을 받지 못했어요");
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(`URL 없음. data: ${JSON.stringify(data)}`);
+      }
+    } catch (err) {
+      if (err instanceof Error) throw err;
+      throw new Error(`알 수 없는 오류: ${String(err)}`);
     }
   }, []);
 

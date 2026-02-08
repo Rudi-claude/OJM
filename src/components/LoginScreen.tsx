@@ -16,8 +16,12 @@ export default function LoginScreen({ onKakaoLogin, isLoading }: LoginScreenProp
     setLoginError(null);
     try {
       await onKakaoLogin();
+      // signInWithOAuth 이후에도 여기에 오면 리다이렉트가 안 된 것
+      setLoginError('리다이렉트 실패: 카카오 페이지로 이동하지 못했어요');
+      setIsSigningIn(false);
     } catch (err) {
-      setLoginError(err instanceof Error ? err.message : '로그인 중 오류가 발생했어요');
+      const msg = err instanceof Error ? err.message : String(err);
+      setLoginError(`오류: ${msg}`);
       setIsSigningIn(false);
     }
   };
