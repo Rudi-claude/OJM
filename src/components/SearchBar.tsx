@@ -94,7 +94,7 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading }: Sea
             setLocationError('위치를 가져오는 중 오류가 발생했습니다.');
         }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 
