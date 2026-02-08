@@ -62,9 +62,21 @@ export default function SearchBar({ onSearch, onLocationSearch, isLoading }: Sea
     }
   };
 
+  // 모바일 기기 여부 판별
+  const isMobileDevice = () => {
+    if (typeof window === 'undefined') return false;
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  };
+
   const handleLocationClick = () => {
     setLocationError(null);
     setLocationWarning(null);
+
+    // PC에서는 위치가 부정확하므로 주소 입력 안내
+    if (!isMobileDevice()) {
+      setLocationWarning('PC에서는 위치가 부정확해요. 주소를 직접 입력해주세요!');
+      return;
+    }
 
     if (!navigator.geolocation) {
       setLocationError('이 브라우저에서는 위치 기능을 지원하지 않습니다.');
