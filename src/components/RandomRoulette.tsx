@@ -14,15 +14,12 @@ interface RandomRouletteProps {
 export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMealLog, onTeamCandidate }: RandomRouletteProps) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selected, setSelected] = useState<Restaurant | null>(null);
-  const [shareStatus, setShareStatus] = useState<string | null>(null);
-
   const spin = () => {
     if (restaurants.length === 0 || isSpinning) return;
 
     setIsSpinning(true);
     setSelected(null);
     onSelect?.(null);
-    setShareStatus(null);
 
     let count = 0;
     const maxCount = 20;
@@ -52,38 +49,6 @@ export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMea
   const getDirectionsUrl = () => {
     if (!selected || !mapCenter || !selected.x || !selected.y) return null;
     return `https://map.kakao.com/link/from/우리회사,${mapCenter.lat},${mapCenter.lng}/to/${encodeURIComponent(selected.name)},${selected.y},${selected.x}`;
-  };
-
-  const handleShare = async () => {
-    if (!selected) return;
-
-    const shareText = `오점뭐? 오늘 점심은 ${selected.name}(${selected.category}) - ${selected.distance}m${selected.placeUrl ? `\n카카오맵: ${selected.placeUrl}` : ''}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: '오점뭐? 오늘의 점심',
-          text: shareText,
-        });
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          await copyToClipboard(shareText);
-        }
-      }
-    } else {
-      await copyToClipboard(shareText);
-    }
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setShareStatus('복사 완료!');
-      setTimeout(() => setShareStatus(null), 2000);
-    } catch {
-      setShareStatus('복사 실패');
-      setTimeout(() => setShareStatus(null), 2000);
-    }
   };
 
   const handleMealLog = () => {
@@ -135,15 +100,6 @@ export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMea
                       여기서 먹었어요
                     </button>
                   )}
-                  <button
-                    onClick={handleShare}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-all"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                    {shareStatus || '공유'}
-                  </button>
                   {onTeamCandidate && (
                     <button
                       onClick={() => onTeamCandidate(selected!)}
