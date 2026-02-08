@@ -156,17 +156,24 @@ export function useAuth(): UseAuthReturn {
   }, [handleSession]);
 
   const signInWithKakao = useCallback(async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",
       options: {
         redirectTo: window.location.origin,
         scopes: "profile_nickname profile_image",
+        skipBrowserRedirect: true,
       },
     });
 
     if (error) {
       console.error("카카오 로그인 실패:", error);
       throw error;
+    }
+
+    if (data?.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error("로그인 URL을 받지 못했어요");
     }
   }, []);
 
