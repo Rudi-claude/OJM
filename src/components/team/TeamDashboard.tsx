@@ -85,22 +85,15 @@ export default function TeamDashboard({
     }
   }, [session, mode]);
 
-  // 활성 투표가 있으면 자동으로 투표 화면 표시
+  // 진행 중(open) 투표가 있으면 자동으로 투표 화면 표시
   useEffect(() => {
-    if (activeVote && mode === 'select') {
+    if (activeVote && activeVote.status === 'open' && mode === 'select') {
       setMode('vote-active');
     }
     if (!activeVote && mode === 'vote-active') {
       setMode('select');
     }
   }, [activeVote, mode]);
-
-  // 투표 마감 시 다른 팀원도 자동으로 vote-active로 전환
-  useEffect(() => {
-    if (activeVote && activeVote.status === 'closed' && mode !== 'vote-active') {
-      setMode('vote-active');
-    }
-  }, [activeVote?.status]);
 
   // 후보 모으기 시작
   const handleStartCollecting = async () => {
