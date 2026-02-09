@@ -48,7 +48,14 @@ export default function RecommendCard({
       <div className="p-4">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">{restaurant.name}</h3>
+            <a
+              href={`https://map.kakao.com/link/search/${encodeURIComponent(restaurant.name)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-lg font-bold text-gray-900 hover:text-[#6B77E8] transition-colors underline decoration-gray-200 underline-offset-2 hover:decoration-[#6B77E8]"
+            >
+              {restaurant.name}
+            </a>
             <span className="inline-block px-3 py-1 mt-1 text-xs font-medium bg-[#F5F6FF] text-[#6B77E8] rounded-full">
               {restaurant.category}
             </span>
