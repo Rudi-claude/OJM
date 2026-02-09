@@ -181,10 +181,19 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("로그아웃 실패:", error);
+    // Supabase 세션 정리 시도 (타임아웃 적용)
+    try {
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => setTimeout(() => reject("timeout"), 2000)),
+      ]);
+    } catch {
+      // signOut 실패해도 로컬 정리 진행
     }
+    // 로컬 스토리지에서 Supabase 토큰 직접 제거
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith("sb-")) localStorage.removeItem(key);
+    });
     setUser(null);
   }, []);
 

@@ -402,19 +402,24 @@ export default function Home() {
       <main className="min-h-screen bg-[#F8F9FC] flex flex-col">
         {/* 헤더 */}
         <header className="bg-white sticky top-0 z-10 shadow-sm">
-          <div className="px-4 py-4">
-            <h1
-              onClick={handleReset}
-              className="text-xl font-bold text-center bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] bg-clip-text text-transparent cursor-pointer"
-            >
-              오점뭐?
-            </h1>
-            <p
-              onClick={handleReset}
-              className="text-center text-gray-400 text-xs mt-0.5 cursor-pointer"
-            >
-              오늘 점심 뭐 먹지? 고민 끝!
-            </p>
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex-1" />
+            <div className="text-center cursor-pointer" onClick={handleReset}>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] bg-clip-text text-transparent">
+                오점뭐?
+              </h1>
+              <p className="text-gray-400 text-xs mt-0.5">
+                오늘 점심 뭐 먹지? 고민 끝!
+              </p>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={signOut}
+                className="text-[11px] text-gray-400 hover:text-red-400 transition-colors px-2 py-1"
+              >
+                로그아웃
+              </button>
+            </div>
           </div>
           {/* 탭 네비게이션 */}
           <div className="flex border-t border-gray-100">
