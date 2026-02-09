@@ -9,9 +9,11 @@ interface RandomRouletteProps {
   mapCenter?: { lat: number; lng: number };
   onMealLog?: (restaurant: Restaurant) => void;
   onTeamCandidate?: (restaurant: Restaurant) => void;
+  onFavoriteToggle?: (restaurant: Restaurant) => void;
+  isFavorite?: (id: string) => boolean;
 }
 
-export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMealLog, onTeamCandidate }: RandomRouletteProps) {
+export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMealLog, onTeamCandidate, onFavoriteToggle, isFavorite }: RandomRouletteProps) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selected, setSelected] = useState<Restaurant | null>(null);
   const spin = () => {
@@ -73,6 +75,31 @@ export default function RandomRoulette({ restaurants, onSelect, mapCenter, onMea
                   {selected.category}
                 </span>
                 <span className="text-xs text-gray-400">직선 {selected.distance}m</span>
+                {!isSpinning && onFavoriteToggle && (
+                  <>
+                    <button
+                      onClick={() => onFavoriteToggle(selected!)}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                        isFavorite?.(selected!.id)
+                          ? 'bg-red-50 text-red-500 scale-110'
+                          : 'bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-400'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill={isFavorite?.(selected!.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={spin}
+                      className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-100 text-gray-400 hover:bg-gray-200 transition-all"
+                      title="다시 돌리기"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </>
+                )}
               </div>
               {!isSpinning && (
                 <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">

@@ -743,6 +743,8 @@ export default function Home() {
                 mapCenter={mapCenter}
                 onMealLog={handleMealLog}
                 onTeamCandidate={canAddTeamCandidate ? (r) => handleAddTeamCandidate(r, 'roulette') : undefined}
+                onFavoriteToggle={handleFavoriteToggle}
+                isFavorite={isFavorite}
               />
             </section>
 
