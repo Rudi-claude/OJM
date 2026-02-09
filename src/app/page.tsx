@@ -56,7 +56,7 @@ export default function Home() {
   const [toast, setToast] = useState<string | null>(null);
 
   // 사용자 & 식사 기록
-  const { user, isLoading: isUserLoading, isAuthenticated, kakaoName, debugLog, signInWithKakao, signOut, updateNickname } = useAuth();
+  const { user, isLoading: isUserLoading, isAuthenticated, kakaoName, signInWithKakao, signOut, updateNickname } = useAuth();
   const { favorites: favoriteRestaurants, favoriteIds, toggleFavorite, addFavorite, isFavorite } = useFavorites(user?.id);
   const { mealLogs, fetchMealLogs, addMealLog } = useMealLogs();
 
@@ -356,19 +356,9 @@ export default function Home() {
     }
   };
 
-  // 디버그 패널
-  const debugPanel = debugLog.length > 0 && (
-    <div className="fixed bottom-0 left-0 right-0 bg-black/80 text-green-400 text-[10px] p-2 z-50 max-h-32 overflow-y-auto font-mono">
-      {debugLog.map((log, i) => <div key={i}>{log}</div>)}
-    </div>
-  );
-
   // 로그인 전: LoginScreen 표시
   if (!isAuthenticated && !isUserLoading) {
-    return <>
-      <LoginScreen />
-      {debugPanel}
-    </>;
+    return <LoginScreen />;
   }
 
   // 로딩 중
@@ -380,7 +370,6 @@ export default function Home() {
             <div className="w-8 h-8 border-2 border-[#6B77E8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-sm text-gray-400">로딩 중...</p>
           </div>
-          {debugPanel}
         </main>
       </div>
     );

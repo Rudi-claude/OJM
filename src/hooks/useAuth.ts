@@ -10,7 +10,6 @@ interface UseAuthReturn {
   isLoading: boolean;
   isAuthenticated: boolean;
   kakaoName: string | null;
-  debugLog: string[];
   signInWithKakao: () => Promise<void>;
   signOut: () => Promise<void>;
   updateNickname: (nickname: string) => Promise<boolean>;
@@ -37,15 +36,7 @@ export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [kakaoName, setKakaoName] = useState<string | null>(null);
-  const [debugLog, setDebugLog] = useState<string[]>([]);
   const initializedRef = useRef(false);
-
-  const addLog = useCallback((msg: string) => {
-    setDebugLog((prev) => [
-      ...prev,
-      `${new Date().toLocaleTimeString()}: ${msg}`,
-    ]);
-  }, []);
 
   // users 테이블에 upsert (기존 닉네임이 있으면 유지)
   const upsertUser = useCallback(
@@ -63,7 +54,6 @@ export function useAuth(): UseAuthReturn {
         null;
 
       try {
-        // 먼저 기존 사용자 확인
         const { data: existing } = await supabase
           .from("users")
           .select("id, nickname, avatar_url")
@@ -71,7 +61,6 @@ export function useAuth(): UseAuthReturn {
           .single();
 
         if (existing) {
-          // 기존 사용자: avatar_url만 업데이트, nickname은 유지
           await supabase
             .from("users")
             .update({ avatar_url: avatarUrl })
@@ -85,7 +74,6 @@ export function useAuth(): UseAuthReturn {
           };
         }
 
-        // 신규 사용자: insert (nickname은 null - NicknameModal에서 설정)
         const { data, error } = await supabase
           .from("users")
           .insert({
@@ -123,28 +111,17 @@ export function useAuth(): UseAuthReturn {
   const loginFromToken = useCallback(
     async (accessToken: string) => {
       const payload = decodeJWT(accessToken);
-      if (!payload) {
-        addLog("JWT 디코딩 실패");
-        return false;
-      }
+      if (!payload) return false;
 
       // 토큰 만료 확인
       const exp = payload.exp as number;
-      if (exp && Date.now() / 1000 > exp) {
-        addLog("토큰 만료됨");
-        return false;
-      }
+      if (exp && Date.now() / 1000 > exp) return false;
 
       const userId = payload.sub as string;
-      if (!userId) {
-        addLog("JWT에 사용자 ID 없음");
-        return false;
-      }
+      if (!userId) return false;
 
       const userMetadata =
         (payload.user_metadata as Record<string, unknown>) || {};
-
-      addLog(`JWT 디코딩 성공: ${userId.substring(0, 8)}...`);
 
       const name =
         (userMetadata.full_name as string) ||
@@ -157,10 +134,9 @@ export function useAuth(): UseAuthReturn {
         user_metadata: userMetadata,
       });
       setUser(userData);
-      addLog("로그인 성공");
       return true;
     },
-    [upsertUser, addLog]
+    [upsertUser]
   );
 
   useEffect(() => {
@@ -172,7 +148,6 @@ export function useAuth(): UseAuthReturn {
         // 1. URL 해시에서 OAuth 토큰 확인 (카카오 로그인 후 리다이렉트)
         const hash = window.location.hash;
         if (hash && hash.includes("access_token")) {
-          addLog("URL에서 토큰 발견");
           const params = new URLSearchParams(hash.substring(1));
           const accessToken = params.get("access_token");
           const refreshToken = params.get("refresh_token");
@@ -181,7 +156,6 @@ export function useAuth(): UseAuthReturn {
           window.history.replaceState(null, "", window.location.pathname);
 
           if (accessToken) {
-            // localStorage에 토큰 저장
             localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
             if (refreshToken) {
               localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
@@ -198,31 +172,27 @@ export function useAuth(): UseAuthReturn {
         // 2. localStorage에서 저장된 토큰 확인
         const storedToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         if (storedToken) {
-          addLog("저장된 토큰 발견");
           const success = await loginFromToken(storedToken);
           if (success) {
             setIsLoading(false);
             return;
           }
-          // 실패 시 (만료 등) 토큰 제거
-          addLog("저장된 토큰 무효 - 제거");
           localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
           localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         }
 
         // 3. 세션 없음
-        addLog("세션 없음 - 로그인 필요");
         setUser(null);
         setIsLoading(false);
       } catch (err) {
-        addLog(`초기화 실패: ${err}`);
+        console.error("auth 초기화 실패:", err);
         setUser(null);
         setIsLoading(false);
       }
     };
 
     init();
-  }, [loginFromToken, addLog]);
+  }, [loginFromToken]);
 
   const signInWithKakao = useCallback(async () => {
     const supabaseUrl = "https://xxhresiqpggsbkbrened.supabase.co";
@@ -232,10 +202,8 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const signOut = useCallback(async () => {
-    // 커스텀 토큰 제거
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-    // Supabase 토큰도 제거
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith("sb-")) localStorage.removeItem(key);
     });
@@ -247,7 +215,6 @@ export function useAuth(): UseAuthReturn {
     async (nickname: string): Promise<boolean> => {
       if (!user?.id) return false;
 
-      // localStorage에도 저장 (호환)
       setNicknameStorage(nickname);
       setUser((prev) => (prev ? { ...prev, nickname } : null));
 
@@ -274,7 +241,6 @@ export function useAuth(): UseAuthReturn {
     isLoading,
     isAuthenticated: !!user,
     kakaoName,
-    debugLog,
     signInWithKakao,
     signOut,
     updateNickname,

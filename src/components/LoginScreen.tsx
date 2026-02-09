@@ -50,11 +50,6 @@ export default function LoginScreen() {
           <p className="text-xs text-gray-300 mt-4">
             간편하게 로그인하고 팀원들과 함께 점심을 정해보세요
           </p>
-          {authUrl && (
-            <p className="text-[9px] text-gray-300 mt-2 break-all">
-              {authUrl}
-            </p>
-          )}
         </div>
       </main>
     </div>
