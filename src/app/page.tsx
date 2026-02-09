@@ -335,7 +335,7 @@ export default function Home() {
     setSelectedMode(null);
 
     try {
-      const response = await fetch(`/api/search?address=${encodeURIComponent(address)}&radius=1000`);
+      const response = await fetch(`/api/search?address=${encodeURIComponent(address)}&radius=2000`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -374,7 +374,7 @@ export default function Home() {
     setSelectedMode(null);
 
     try {
-      const response = await fetch(`/api/search?lat=${lat}&lng=${lng}&radius=1000`);
+      const response = await fetch(`/api/search?lat=${lat}&lng=${lng}&radius=2000`);
       const data = await response.json();
 
       if (!response.ok) {
