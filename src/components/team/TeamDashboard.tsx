@@ -313,13 +313,20 @@ export default function TeamDashboard({
             >
               초기화
             </button>
-            <button
-              onClick={handleAdvance}
-              disabled={candidates.length < 2}
-              className="flex-1 py-3 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-sm font-bold hover:shadow-lg transition-all disabled:opacity-50"
-            >
-              다음 단계 →
-            </button>
+            <div className="flex-1 relative group">
+              <button
+                onClick={handleAdvance}
+                disabled={candidates.length < 2}
+                className="w-full py-3 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-sm font-bold hover:shadow-lg transition-all disabled:opacity-50"
+              >
+                다음 단계 →
+              </button>
+              {candidates.length < 2 && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                  두 개 이상 후보를 등록해주세요
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
