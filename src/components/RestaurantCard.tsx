@@ -1,33 +1,21 @@
 'use client';
 
-import { useState } from 'react';
 import { Restaurant } from '@/types';
 import { toggleExclude } from '@/lib/storage';
-
-interface BlogReview {
-  title: string;
-  description: string;
-  bloggerName: string;
-  date: string;
-  link: string;
-}
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
   onExcludeChange?: () => void;
   onFavoriteToggle?: (restaurant: Restaurant) => void;
   isFavorite?: boolean;
+  isExcluded?: boolean;
   onMealLog?: (restaurant: Restaurant) => void;
   onTeamCandidate?: (restaurant: Restaurant) => void;
   isRecentVisit?: boolean;
 }
 
-export default function RestaurantCard({ restaurant, onExcludeChange, onFavoriteToggle, isFavorite = false, onMealLog, onTeamCandidate, isRecentVisit }: RestaurantCardProps) {
+export default function RestaurantCard({ restaurant, onExcludeChange, onFavoriteToggle, isFavorite = false, isExcluded = false, onMealLog, onTeamCandidate, isRecentVisit }: RestaurantCardProps) {
   const { name, category, address, distance, rating, phone, placeUrl } = restaurant;
-  const [showReviews, setShowReviews] = useState(false);
-  const [reviews, setReviews] = useState<BlogReview[]>([]);
-  const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const handleFavorite = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -50,45 +38,8 @@ export default function RestaurantCard({ restaurant, onExcludeChange, onFavorite
     onTeamCandidate?.(restaurant);
   };
 
-  const handleToggleReviews = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (showReviews) {
-      setShowReviews(false);
-      return;
-    }
-
-    if (reviews.length > 0) {
-      setShowReviews(true);
-      return;
-    }
-
-    setReviewLoading(true);
-    setReviewError(null);
-
-    try {
-      const query = encodeURIComponent(name);
-      const res = await fetch(`/api/blog-reviews?query=${query}`);
-      const data = await res.json();
-
-      if (!res.ok) {
-        setReviewError(data.error || '후기를 불러올 수 없습니다.');
-      } else if (data.reviews.length === 0) {
-        setReviewError('관련 블로그 후기가 없습니다.');
-      } else {
-        setReviews(data.reviews);
-      }
-      setShowReviews(true);
-    } catch {
-      setReviewError('후기를 불러오는 중 오류가 발생했습니다.');
-      setShowReviews(true);
-    } finally {
-      setReviewLoading(false);
-    }
-  };
-
   return (
-    <div className="bg-white rounded-xl p-4 hover:shadow-lg transition-all duration-200 border border-gray-100 card-hover">
+    <div className={`bg-white rounded-xl p-4 hover:shadow-lg transition-all duration-200 border card-hover ${isExcluded ? 'border-red-100 bg-red-50/30' : 'border-gray-100'}`}>
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <h3 className="font-bold text-sm text-gray-800 leading-tight truncate">{name}</h3>
@@ -98,26 +49,26 @@ export default function RestaurantCard({ restaurant, onExcludeChange, onFavorite
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+        <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
           <span className="text-[11px] bg-[#F5F6FF] text-[#6B77E8] px-2 py-1 rounded-full font-medium">
             {category}
           </span>
           <button
             onClick={handleFavorite}
-            className={`p-1 transition-colors ${isFavorite ? 'text-blue-500' : 'text-gray-300 hover:text-blue-400'}`}
+            className={`p-1.5 rounded-full transition-colors ${isFavorite ? 'text-blue-500 bg-blue-50' : 'text-gray-300 hover:text-blue-400 hover:bg-blue-50'}`}
             title={isFavorite ? '좋아요 해제' : '좋아요'}
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14zm-9 11H3a1 1 0 01-1-1v-7a1 1 0 011-1h2" />
             </svg>
           </button>
           <button
             onClick={handleExclude}
-            className="p-1 text-gray-300 hover:text-red-400 transition-colors"
-            title="싫어요"
+            className={`p-1.5 rounded-full transition-colors ${isExcluded ? 'text-red-500 bg-red-50' : 'text-gray-300 hover:text-red-400 hover:bg-red-50'}`}
+            title={isExcluded ? '싫어요 해제' : '싫어요'}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 15V19a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10zm9-13h2a1 1 0 011 1v7a1 1 0 01-1 1h-2" />
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isExcluded ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 15V19a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10zm9-13h2a1 1 0 011 1v7a1 1 0 01-1 1h-2" />
             </svg>
           </button>
         </div>
@@ -167,18 +118,6 @@ export default function RestaurantCard({ restaurant, onExcludeChange, onFavorite
             </svg>
           </a>
         )}
-        <button
-          onClick={handleToggleReviews}
-          disabled={reviewLoading}
-          className="flex items-center gap-1.5 px-3 py-2.5 bg-green-50 hover:bg-green-100 text-green-600 rounded-xl transition-colors flex-shrink-0 disabled:opacity-50"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-          </svg>
-          <span className="text-xs font-medium">
-            {reviewLoading ? '로딩...' : '후기'}
-          </span>
-        </button>
         {onMealLog && (
           <button
             onClick={handleMealLog}
@@ -202,39 +141,6 @@ export default function RestaurantCard({ restaurant, onExcludeChange, onFavorite
           </button>
         )}
       </div>
-
-      {showReviews && (
-        <div className="mt-3 border-t border-gray-100 pt-3">
-          {reviewError ? (
-            <p className="text-xs text-gray-400 text-center py-2">{reviewError}</p>
-          ) : (
-            <div className="space-y-2.5">
-              <p className="text-[11px] text-gray-400 font-medium">블로그 후기</p>
-              {reviews.map((review, idx) => (
-                <a
-                  key={idx}
-                  href={review.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <p className="text-xs font-medium text-gray-700 leading-snug line-clamp-1">
-                    {review.title}
-                  </p>
-                  <p className="text-[11px] text-gray-400 mt-1 leading-relaxed line-clamp-2">
-                    {review.description}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="text-[10px] text-green-500 font-medium">{review.bloggerName}</span>
-                    <span className="text-[10px] text-gray-300">{review.date}</span>
-                  </div>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

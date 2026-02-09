@@ -89,7 +89,7 @@ export default function Home() {
   // 주소 검색 관련
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category>('전체');
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>(['전체']);
   const [isLoading, setIsLoading] = useState(false);
   const [searchedAddress, setSearchedAddress] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -307,10 +307,10 @@ export default function Home() {
   // 주소 검색 완료 여부
   const isAddressSearched = searchedAddress && allRestaurants.length > 0 && mapCenter;
 
-  // 제외 적용된 전체/필터링 식당
-  const visibleAllRestaurants = getFilteredRestaurants(allRestaurants);
-  const visibleRestaurants = getFilteredRestaurants(restaurants);
-  const excludedCount = allRestaurants.length - visibleAllRestaurants.length;
+  // 제외 적용된 식당 (룰렛/AI용)
+  const filteredAllRestaurants = getFilteredRestaurants(allRestaurants);
+  const filteredRestaurants = getFilteredRestaurants(restaurants);
+  const excludedCount = excludedIds.filter((id) => allRestaurants.some((r) => r.id === id)).length;
 
   // 날씨 조회
   const fetchWeather = async (lat: number, lng: number) => {
@@ -353,7 +353,7 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setSearchedAddress(address);
-    setSelectedCategory('전체');
+    setSelectedCategories(['전체']);
     setSelectedRestaurant(null);
     setSelectedMode(null);
 
@@ -392,7 +392,7 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setSearchedAddress('현재 위치');
-    setSelectedCategory('전체');
+    setSelectedCategories(['전체']);
     setSelectedRestaurant(null);
     setSelectedMode(null);
 
@@ -422,14 +422,14 @@ export default function Home() {
     }
   };
 
-  const handleCategoryChange = (category: Category) => {
-    setSelectedCategory(category);
+  const handleCategoryChange = (categories: Category[]) => {
+    setSelectedCategories(categories);
     setSelectedRestaurant(null);
 
-    if (category === '전체') {
+    if (categories.includes('전체')) {
       setRestaurants(allRestaurants);
     } else {
-      const filtered = allRestaurants.filter((r) => r.category === category);
+      const filtered = allRestaurants.filter((r) => categories.includes(r.category as Category));
       setRestaurants(filtered);
     }
   };
@@ -446,7 +446,7 @@ export default function Home() {
   const handleReset = () => {
     setRestaurants([]);
     setAllRestaurants([]);
-    setSelectedCategory('전체');
+    setSelectedCategories(['전체']);
     setIsLoading(false);
     setSearchedAddress('');
     setError(null);
@@ -770,13 +770,13 @@ export default function Home() {
 
             {/* 카테고리 필터 */}
             <section className="mb-4">
-              <CategoryFilter selected={selectedCategory} onChange={handleCategoryChange} />
+              <CategoryFilter selected={selectedCategories} onChange={handleCategoryChange} />
             </section>
 
             {/* 랜덤 룰렛 */}
             <section className="mb-6">
               <RandomRoulette
-                restaurants={visibleRestaurants}
+                restaurants={filteredRestaurants}
                 onSelect={handleRouletteSelect}
                 mapCenter={mapCenter}
                 onMealLog={handleMealLog}
@@ -800,7 +800,7 @@ export default function Home() {
               {showMap && (
                 <div className="rounded-2xl overflow-hidden shadow-lg">
                   <KakaoMap
-                    restaurants={visibleRestaurants}
+                    restaurants={restaurants}
                     center={mapCenter}
                     selectedRestaurant={selectedRestaurant}
                   />
@@ -812,18 +812,19 @@ export default function Home() {
             <section className="pb-2">
               <div className="flex justify-between items-center mb-3">
                 <h2 className="text-base font-bold text-gray-800">
-                  {selectedCategory === '전체' ? '전체' : selectedCategory} 맛집
+                  {selectedCategories.includes('전체') ? '전체' : selectedCategories.join('·')} 맛집
                   <span className="ml-1.5 text-xs font-normal text-[#8B95FF]">
-                    {visibleRestaurants.length}곳
+                    {restaurants.length}곳
                   </span>
                 </h2>
               </div>
               <RestaurantList
-                restaurants={visibleRestaurants}
+                restaurants={restaurants}
                 isLoading={isLoading}
                 onExcludeChange={handleExcludeChange}
                 onFavoriteToggle={handleFavoriteToggle}
                 favoriteIds={favoriteIds}
+                excludedIds={excludedIds}
                 onMealLog={handleMealLog}
                 onTeamCandidate={canAddTeamCandidate ? (r) => handleAddTeamCandidate(r, 'manual') : undefined}
                 recentVisitIds={recentVisitIds}
@@ -848,7 +849,7 @@ export default function Home() {
 
             <div className="h-[calc(100vh-240px)] bg-white rounded-2xl shadow-lg overflow-hidden">
               <ChatContainer
-                restaurants={allRestaurants}
+                restaurants={filteredAllRestaurants}
                 weather={weather}
                 mapCenter={mapCenter}
                 searchedAddress={searchedAddress}
