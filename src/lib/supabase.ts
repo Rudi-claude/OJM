@@ -16,7 +16,14 @@ if (!isConfigured && typeof window !== "undefined") {
 
 export const supabase: SupabaseClient<Database> = createClient<Database>(
   supabaseUrl,
-  supabaseAnonKey
+  supabaseAnonKey,
+  {
+    auth: {
+      detectSessionInUrl: false,
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
 );
 
 export const isSupabaseConfigured = isConfigured;
