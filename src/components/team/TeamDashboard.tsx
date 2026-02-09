@@ -24,6 +24,7 @@ interface TeamDashboardProps {
   onRefreshMembers: () => void;
   onUpdateAddress?: (address: string, lat: number, lng: number) => Promise<boolean>;
   onTeamMealLog?: (teamId: string, restaurantId: string, restaurantName: string, category: string) => void;
+  onRenameTeam?: (name: string) => Promise<boolean>;
 }
 
 export default function TeamDashboard({
@@ -36,6 +37,7 @@ export default function TeamDashboard({
   onRefreshMembers,
   onUpdateAddress,
   onTeamMealLog,
+  onRenameTeam,
 }: TeamDashboardProps) {
   const [mode, setMode] = useState<TeamMode>('select');
   const [showAddressInput, setShowAddressInput] = useState(false);
@@ -186,7 +188,7 @@ export default function TeamDashboard({
 
   return (
     <div className="space-y-4">
-      <TeamHeader team={team} memberCount={members.length} onLeave={onLeaveTeam} />
+      <TeamHeader team={team} memberCount={members.length} onLeave={onLeaveTeam} onRename={onRenameTeam} />
 
       <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100">
         <TeamMemberList members={members} currentUserId={userId} />

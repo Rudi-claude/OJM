@@ -138,6 +138,7 @@ export default function Home() {
     fetchMembers,
     refreshTeam,
     updateTeamAddress,
+    updateTeamName,
   } = useTeam();
 
   // 팀 세션
@@ -625,6 +626,12 @@ export default function Home() {
                 onRefreshMembers={() => fetchMembers()}
                 onUpdateAddress={(address, lat, lng) => updateTeamAddress(team.id, address, lat, lng)}
                 onTeamMealLog={handleTeamMealLog}
+                onRenameTeam={async (name) => {
+                  const success = await updateTeamName(team.id, name);
+                  if (success) showToast('팀 이름이 변경되었어요');
+                  else showToast('팀 이름 변경에 실패했어요');
+                  return success;
+                }}
               />
             )}
           </section>

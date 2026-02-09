@@ -262,6 +262,30 @@ export function useTeam() {
     []
   );
 
+  const updateTeamName = useCallback(
+    async (teamId: string, name: string): Promise<boolean> => {
+      try {
+        const { error: updateError } = await supabase
+          .from("teams")
+          .update({ name })
+          .eq("id", teamId);
+
+        if (updateError) throw updateError;
+
+        setTeam((prev) => (prev ? { ...prev, name } : null));
+        const stored = getCurrentTeam();
+        if (stored && stored.id === teamId) {
+          setCurrentTeam({ ...stored, name });
+        }
+        return true;
+      } catch (err) {
+        console.error("팀 이름 변경 실패:", err);
+        return false;
+      }
+    },
+    []
+  );
+
   return {
     team,
     members,
@@ -273,5 +297,6 @@ export function useTeam() {
     fetchMembers,
     refreshTeam,
     updateTeamAddress,
+    updateTeamName,
   };
 }
