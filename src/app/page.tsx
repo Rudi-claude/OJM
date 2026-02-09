@@ -23,6 +23,67 @@ import { useTeamSession } from '@/hooks/useTeamSession';
 type ModeType = 'roulette' | 'chat';
 type TabType = 'nearby' | 'favorites' | 'team';
 
+function NicknameEditForm({ currentNickname, onSubmit, onCancel }: {
+  currentNickname: string;
+  onSubmit: (nickname: string) => Promise<boolean>;
+  onCancel: () => void;
+}) {
+  const [nickname, setNickname] = useState(currentNickname);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    const trimmed = nickname.trim();
+    if (trimmed.length < 2 || trimmed.length > 10) {
+      setError('닉네임은 2~10자로 입력해주세요');
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+    const success = await onSubmit(trimmed);
+    if (!success) {
+      setError('닉네임 저장에 실패했어요');
+    }
+    setIsSubmitting(false);
+  };
+
+  return (
+    <>
+      <div className="text-center mb-5">
+        <h2 className="text-base font-bold text-gray-800">닉네임 변경</h2>
+      </div>
+      <div className="space-y-3">
+        <input
+          type="text"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          placeholder="2~10자 닉네임"
+          maxLength={10}
+          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#6B77E8] focus:ring-1 focus:ring-[#6B77E8] text-center"
+          autoFocus
+        />
+        {error && <p className="text-xs text-red-500 text-center">{error}</p>}
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium"
+          >
+            취소
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || nickname.trim().length < 2}
+            className="flex-1 py-2.5 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-sm font-bold disabled:opacity-50"
+          >
+            {isSubmitting ? '저장 중...' : '변경'}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function Home() {
   // 주소 검색 관련
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -50,6 +111,9 @@ export default function Home() {
 
   // 탭
   const [activeTab, setActiveTab] = useState<TabType>('nearby');
+
+  // 닉네임 수정 모달
+  const [showNicknameEdit, setShowNicknameEdit] = useState(false);
 
 
   // 토스트
@@ -401,10 +465,19 @@ export default function Home() {
                 오늘 점심 뭐 먹지? 고민 끝!
               </p>
             </div>
-            <div className="flex-1 flex justify-end">
+            <div className="flex-1 flex justify-end items-center gap-2">
+              <button
+                onClick={() => setShowNicknameEdit(true)}
+                className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-[#6B77E8] transition-colors px-2 py-1"
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#6B77E8] to-[#8B95FF] flex items-center justify-center text-white text-[9px] font-bold">
+                  {user?.nickname?.charAt(0) || '?'}
+                </div>
+                <span className="max-w-[60px] truncate">{user?.nickname || '닉네임'}</span>
+              </button>
               <button
                 onClick={signOut}
-                className="text-[11px] text-gray-400 hover:text-red-400 transition-colors px-2 py-1"
+                className="text-[11px] text-gray-400 hover:text-red-400 transition-colors"
               >
                 로그아웃
               </button>
@@ -708,6 +781,26 @@ export default function Home() {
         )}
         </>}
         </div>
+
+        {/* 닉네임 수정 모달 */}
+        {showNicknameEdit && (
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-6" onClick={() => setShowNicknameEdit(false)}>
+            <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+              <NicknameEditForm
+                currentNickname={user?.nickname || ''}
+                onSubmit={async (nickname) => {
+                  const success = await updateNickname(nickname);
+                  if (success) {
+                    setShowNicknameEdit(false);
+                    showToast('닉네임이 변경되었어요');
+                  }
+                  return success;
+                }}
+                onCancel={() => setShowNicknameEdit(false)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* 토스트 알림 */}
         {toast && (
