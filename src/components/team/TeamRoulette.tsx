@@ -10,9 +10,10 @@ interface TeamRouletteProps {
   nickname: string;
   restaurants: Restaurant[];
   mapCenter?: { lat: number; lng: number };
+  onTeamMealLog?: (restaurant: Restaurant) => void;
 }
 
-export default function TeamRoulette({ teamId, userId, nickname, restaurants, mapCenter }: TeamRouletteProps) {
+export default function TeamRoulette({ teamId, userId, nickname, restaurants, mapCenter, onTeamMealLog }: TeamRouletteProps) {
   const { displayRestaurant, isSpinning, spinnerName, startRoulette, subscribeToRoulette, unsubscribe } = useTeamRoulette();
   const [shareStatus, setShareStatus] = useState<string | null>(null);
 
@@ -106,6 +107,17 @@ export default function TeamRoulette({ teamId, userId, nickname, restaurants, ma
                       </svg>
                       {shareStatus || '공유'}
                     </button>
+                    {onTeamMealLog && (
+                      <button
+                        onClick={() => onTeamMealLog(displayRestaurant!)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 text-amber-600 rounded-xl text-xs font-semibold hover:bg-amber-100 transition-all"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        먹었어요
+                      </button>
+                    )}
                   </div>
                 </>
               )}

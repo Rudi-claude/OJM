@@ -239,10 +239,10 @@ export default function Home() {
   };
 
   // 식사 기록 저장
-  const handleMealLog = async (restaurant: Restaurant) => {
+  const handleMealLog = async (restaurant: Restaurant): Promise<boolean> => {
     if (!user?.id) {
       showToast('사용자 정보를 불러오는 중이에요');
-      return;
+      return false;
     }
     const success = await addMealLog({
       userId: user.id,
@@ -256,6 +256,7 @@ export default function Home() {
     } else {
       showToast('기록 저장에 실패했어요');
     }
+    return success;
   };
 
   // 좋아요 변경 핸들러 (RestaurantCard에서 토글 후 호출)
@@ -274,6 +275,28 @@ export default function Home() {
       showToast(msg);
     } else {
       showToast('이미 팀 후보에 있어요');
+    }
+  };
+
+  // 팀 식사 기록 핸들러
+  const handleTeamMealLog = async (teamId: string, restaurantId: string, restaurantName: string, category: string) => {
+    try {
+      const response = await fetch('/api/team-meal-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, restaurantId, restaurantName, category }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        showToast(`팀 전체 식사 기록 완료! (${data.count}명)`);
+        if (user?.id) {
+          fetchMealLogs(user.id, 7);
+        }
+      } else {
+        showToast('식사 기록 저장에 실패했어요');
+      }
+    } catch {
+      showToast('식사 기록 저장에 실패했어요');
     }
   };
 
@@ -601,6 +624,7 @@ export default function Home() {
                 onLeaveTeam={handleLeaveTeam}
                 onRefreshMembers={() => fetchMembers()}
                 onUpdateAddress={(address, lat, lng) => updateTeamAddress(team.id, address, lat, lng)}
+                onTeamMealLog={handleTeamMealLog}
               />
             )}
           </section>
@@ -830,6 +854,7 @@ export default function Home() {
                 searchedAddress={searchedAddress}
                 userId={user?.id}
                 onTeamCandidate={canAddTeamCandidate ? (r) => handleAddTeamCandidate(r, 'ai') : undefined}
+                onMealLog={handleMealLog}
               />
             </div>
           </>

@@ -23,6 +23,7 @@ interface TeamDashboardProps {
   onLeaveTeam: () => void;
   onRefreshMembers: () => void;
   onUpdateAddress?: (address: string, lat: number, lng: number) => Promise<boolean>;
+  onTeamMealLog?: (teamId: string, restaurantId: string, restaurantName: string, category: string) => void;
 }
 
 export default function TeamDashboard({
@@ -34,13 +35,14 @@ export default function TeamDashboard({
   onLeaveTeam,
   onRefreshMembers,
   onUpdateAddress,
+  onTeamMealLog,
 }: TeamDashboardProps) {
   const [mode, setMode] = useState<TeamMode>('select');
   const [showAddressInput, setShowAddressInput] = useState(false);
   const [addressInput, setAddressInput] = useState('');
   const [isAddressLoading, setIsAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
-  const { activeVote, isLoading: isVoteLoading, createVote, castVote, closeVote, fetchActiveVote, subscribeToVotes, unsubscribe: unsubscribeVotes } = useTeamVote();
+  const { activeVote, isLoading: isVoteLoading, createVote, castVote, closeVote, clearVote, fetchActiveVote, subscribeToVotes, unsubscribe: unsubscribeVotes } = useTeamVote();
   const {
     session,
     candidates,
@@ -93,6 +95,13 @@ export default function TeamDashboard({
     }
   }, [activeVote, mode]);
 
+  // 투표 마감 시 다른 팀원도 자동으로 vote-active로 전환
+  useEffect(() => {
+    if (activeVote && activeVote.status === 'closed' && mode !== 'vote-active') {
+      setMode('vote-active');
+    }
+  }, [activeVote?.status]);
+
   // 후보 모으기 시작
   const handleStartCollecting = async () => {
     const newSession = await startSession(team.id, userId);
@@ -137,6 +146,7 @@ export default function TeamDashboard({
 
   // 새 투표
   const handleNewVote = () => {
+    clearVote();
     setMode('select');
   };
 
@@ -351,6 +361,7 @@ export default function TeamDashboard({
             nickname={nickname}
             restaurants={candidateRestaurants}
             mapCenter={mapCenter}
+            onTeamMealLog={onTeamMealLog ? (restaurant) => onTeamMealLog(team.id, restaurant.id, restaurant.name, restaurant.category) : undefined}
           />
         </div>
       )}
@@ -401,6 +412,7 @@ export default function TeamDashboard({
             onCastVote={castVote}
             onCloseVote={closeVote}
             onNewVote={handleNewVote}
+            onTeamMealLog={onTeamMealLog ? (restaurant) => onTeamMealLog(team.id, restaurant.id, restaurant.name, restaurant.category) : undefined}
           />
         </div>
       )}

@@ -25,6 +25,7 @@ interface ChatContainerProps {
   searchedAddress: string;
   userId?: string;
   onTeamCandidate?: (restaurant: Restaurant) => void;
+  onMealLog?: (restaurant: Restaurant) => Promise<boolean>;
 }
 
 export default function ChatContainer({
@@ -34,6 +35,7 @@ export default function ChatContainer({
   searchedAddress,
   userId,
   onTeamCandidate,
+  onMealLog,
 }: ChatContainerProps) {
   const { addMealLog, fetchMealLogs } = useMealLogs();
 
@@ -186,14 +188,19 @@ export default function ChatContainer({
       return;
     }
 
-    const success = await addMealLog({
-      userId,
-      restaurantId: restaurant.id,
-      restaurantName: restaurant.name,
-      category: restaurant.category,
-      weather: propWeather?.condition,
-      mood: selectedMood,
-    });
+    let success = false;
+    if (onMealLog) {
+      success = await onMealLog(restaurant);
+    } else {
+      success = await addMealLog({
+        userId,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        category: restaurant.category,
+        weather: propWeather?.condition,
+        mood: selectedMood,
+      });
+    }
 
     if (success) {
       addMessage("user", `${restaurant.name}에서 먹을게요!`);

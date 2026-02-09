@@ -9,9 +9,10 @@ interface TeamVoteActiveProps {
   onCastVote: (voteId: string, optionId: string, userId: string) => Promise<boolean>;
   onCloseVote: (voteId: string) => Promise<boolean>;
   onNewVote: () => void;
+  onTeamMealLog?: (restaurant: { id: string; name: string; category: string }) => void;
 }
 
-export default function TeamVoteActive({ vote, userId, mapCenter, onCastVote, onCloseVote, onNewVote }: TeamVoteActiveProps) {
+export default function TeamVoteActive({ vote, userId, mapCenter, onCastVote, onCloseVote, onNewVote, onTeamMealLog }: TeamVoteActiveProps) {
   const isCreator = vote.createdBy === userId;
   const isClosed = vote.status === 'closed';
   const totalVotes = vote.options.reduce((sum, o) => sum + o.pickCount, 0);
@@ -129,19 +130,36 @@ export default function TeamVoteActive({ vote, userId, mapCenter, onCastVote, on
                 <p className="text-xs text-[#6B77E8] font-medium mb-2">
                   오늘의 점심은 <span className="font-bold">{winner.restaurant.name}</span>!
                 </p>
-                {url && (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-xs font-semibold hover:shadow-lg transition-all"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                    </svg>
-                    카카오맵에서 보기
-                  </a>
-                )}
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  {url && (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-[#6B77E8] to-[#8B95FF] text-white rounded-xl text-xs font-semibold hover:shadow-lg transition-all"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                      카카오맵에서 보기
+                    </a>
+                  )}
+                  {onTeamMealLog && (
+                    <button
+                      onClick={() => onTeamMealLog({
+                        id: winner.restaurant.id,
+                        name: winner.restaurant.name,
+                        category: winner.restaurant.category || '기타',
+                      })}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-50 text-amber-600 rounded-xl text-xs font-semibold hover:bg-amber-100 transition-all"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      먹었어요
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })()}

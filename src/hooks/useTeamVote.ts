@@ -28,7 +28,7 @@ export function useTeamVote() {
           .from("team_votes")
           .select("id, team_id, title, created_by, status, created_at")
           .eq("team_id", teamId)
-          .eq("status", "open")
+          .in("status", ["open", "closed"])
           .order("created_at", { ascending: false })
           .limit(1)
           .single();
@@ -196,6 +196,7 @@ export function useTeamVote() {
           .eq("id", voteId);
 
         if (updateError) throw updateError;
+        setActiveVote((prev) => prev ? { ...prev, status: 'closed' } : null);
         return true;
       } catch (err) {
         console.error("투표 마감 실패:", err);
@@ -204,6 +205,10 @@ export function useTeamVote() {
     },
     []
   );
+
+  const clearVote = useCallback(() => {
+    setActiveVote(null);
+  }, []);
 
   const subscribeToVotes = useCallback(
     (teamId: string, userId: string) => {
@@ -265,6 +270,7 @@ export function useTeamVote() {
     createVote,
     castVote,
     closeVote,
+    clearVote,
     fetchActiveVote,
     subscribeToVotes,
     unsubscribe,
