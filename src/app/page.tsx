@@ -124,7 +124,7 @@ export default function Home() {
   // 사용자 & 식사 기록
   const { user, isLoading: isUserLoading, isAuthenticated, kakaoName, signInWithKakao, signOut, updateNickname } = useAuth();
   const { favorites: favoriteRestaurants, favoriteIds, toggleFavorite, addFavorite, isFavorite } = useFavorites(user?.id);
-  const { mealLogs, fetchMealLogs, addMealLog } = useMealLogs();
+  const { mealLogs, fetchMealLogs, addMealLog, deleteMealLog } = useMealLogs();
 
   // 팀
   const {
@@ -619,7 +619,7 @@ export default function Home() {
 
         {/* 식사내역 탭 */}
         {activeTab === 'history' && (
-          <MealHistory mealLogs={mealLogs} />
+          <MealHistory mealLogs={mealLogs} onDelete={deleteMealLog} />
         )}
 
         {/* 주변 맛집 탭 */}

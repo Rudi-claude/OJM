@@ -9,6 +9,7 @@ interface UseMealLogsReturn {
   error: string | null;
   fetchMealLogs: (userId: string, days?: number) => Promise<void>;
   addMealLog: (params: AddMealLogParams) => Promise<boolean>;
+  deleteMealLog: (id: string) => Promise<boolean>;
   getCategoryStats: () => CategoryStats[];
   getRecentCategories: (days?: number) => string[];
 }
@@ -103,6 +104,24 @@ export function useMealLogs(): UseMealLogsReturn {
     []
   );
 
+  const deleteMealLog = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/meal-logs?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      setMealLogs((prev) => prev.filter((log) => log.id !== id));
+      return true;
+    } catch (err) {
+      console.error("식사 기록 삭제 실패:", err);
+      return false;
+    }
+  }, []);
+
   const getCategoryStats = useCallback((): CategoryStats[] => {
     const statsMap = new Map<
       string,
@@ -155,6 +174,7 @@ export function useMealLogs(): UseMealLogsReturn {
     error,
     fetchMealLogs,
     addMealLog,
+    deleteMealLog,
     getCategoryStats,
     getRecentCategories,
   };

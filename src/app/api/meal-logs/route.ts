@@ -110,3 +110,38 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "id가 필요합니다." },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabase
+      .from("meal_logs")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("식사 기록 삭제 실패:", error);
+      return NextResponse.json(
+        { error: "식사 기록을 삭제할 수 없습니다." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("API 오류:", error);
+    return NextResponse.json(
+      { error: "서버 오류가 발생했습니다." },
+      { status: 500 }
+    );
+  }
+}

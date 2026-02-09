@@ -4,6 +4,7 @@ import type { MealLog } from '@/types';
 
 interface MealHistoryProps {
   mealLogs: MealLog[];
+  onDelete?: (id: string) => Promise<boolean>;
 }
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
@@ -51,7 +52,7 @@ function getCategoryEmoji(category: string): string {
   return '🍽️';
 }
 
-export default function MealHistory({ mealLogs }: MealHistoryProps) {
+export default function MealHistory({ mealLogs, onDelete }: MealHistoryProps) {
   const weekDays = getWeekDays();
   const today = new Date();
 
@@ -76,7 +77,6 @@ export default function MealHistory({ mealLogs }: MealHistoryProps) {
       <div className="space-y-2">
         {logsByDay.map(({ date, dayName, logs }) => {
           const todayFlag = isToday(date);
-          const isPast = date < today && !todayFlag;
           const isFuture = date > today && !todayFlag;
           const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
 
@@ -96,7 +96,7 @@ export default function MealHistory({ mealLogs }: MealHistoryProps) {
                 <div className={`w-10 text-center flex-shrink-0 ${
                   todayFlag ? 'text-[#6B77E8]' : dayName === '토' ? 'text-blue-400' : dayName === '일' ? 'text-red-400' : 'text-gray-500'
                 }`}>
-                  <div className={`text-lg font-bold ${todayFlag ? '' : ''}`}>{dayName}</div>
+                  <div className="text-lg font-bold">{dayName}</div>
                   <div className="text-[10px]">{dateStr}</div>
                 </div>
 
@@ -105,7 +105,7 @@ export default function MealHistory({ mealLogs }: MealHistoryProps) {
                 {/* 식사 기록 */}
                 <div className="flex-1 min-w-0">
                   {logs.length > 0 ? (
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       {logs.map(log => (
                         <div key={log.id} className="flex items-center gap-2">
                           <span className="text-base flex-shrink-0">{getCategoryEmoji(log.category)}</span>
@@ -113,6 +113,17 @@ export default function MealHistory({ mealLogs }: MealHistoryProps) {
                           <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-full flex-shrink-0">
                             {log.category}
                           </span>
+                          {onDelete && (
+                            <button
+                              onClick={() => onDelete(log.id)}
+                              className="ml-auto flex-shrink-0 w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors"
+                              title="삭제"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -122,13 +133,6 @@ export default function MealHistory({ mealLogs }: MealHistoryProps) {
                     </span>
                   )}
                 </div>
-
-                {/* 오늘 표시 */}
-                {todayFlag && (
-                  <span className="text-[10px] font-bold text-[#6B77E8] bg-[#6B77E8]/10 px-2 py-0.5 rounded-full flex-shrink-0">
-                    오늘
-                  </span>
-                )}
               </div>
             </div>
           );
