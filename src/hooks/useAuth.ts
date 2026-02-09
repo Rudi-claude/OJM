@@ -123,36 +123,56 @@ export function useAuth(): UseAuthReturn {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    // 안전장치: 3초 후에도 로딩 중이면 강제 해제
-    const timeout = setTimeout(() => {
-      addLog("타임아웃: 3초 초과");
-      setIsLoading(false);
-    }, 3000);
+    const init = async () => {
+      try {
+        // 1. URL 해시에서 OAuth 토큰 확인 (카카오 로그인 후 리다이렉트)
+        const hash = window.location.hash;
+        if (hash && hash.includes("access_token")) {
+          addLog("URL에서 토큰 발견, setSession 시도");
+          const params = new URLSearchParams(hash.substring(1));
+          const accessToken = params.get("access_token");
+          const refreshToken = params.get("refresh_token");
 
-    // 1. 기존 세션 확인
-    addLog("getSession 호출 시작");
+          if (accessToken && refreshToken) {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
 
-    // getSession에 자체 타임아웃 적용
-    const sessionPromise = supabase.auth.getSession();
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("getSession 2초 타임아웃")), 2000)
-    );
+            // URL 해시 제거
+            window.history.replaceState(null, "", window.location.pathname);
 
-    Promise.race([sessionPromise, timeoutPromise])
-      .then((result) => {
+            if (error) {
+              addLog(`setSession 실패: ${error.message}`);
+            } else if (data.session?.user) {
+              addLog("setSession 성공");
+              await handleSession(data.session);
+              return;
+            }
+          }
+        }
+
+        // 2. 기존 세션 확인 (타임아웃 적용)
+        addLog("getSession 호출 시작");
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("2초 타임아웃")), 2000)
+        );
+
+        const result = await Promise.race([sessionPromise, timeoutPromise]);
         const session = (result as { data: { session: any } }).data.session;
-        clearTimeout(timeout);
         addLog(`getSession 완료: ${session ? "세션 있음" : "세션 없음"}`);
-        handleSession(session);
-      })
-      .catch((err) => {
-        addLog(`getSession 실패/타임아웃: ${err}`);
-        clearTimeout(timeout);
+        await handleSession(session);
+      } catch (err) {
+        addLog(`초기화 실패: ${err}`);
         setUser(null);
         setIsLoading(false);
-      });
+      }
+    };
 
-    // 2. 인증 상태 변경 리스너
+    init();
+
+    // 인증 상태 변경 리스너
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -167,10 +187,9 @@ export function useAuth(): UseAuthReturn {
     });
 
     return () => {
-      clearTimeout(timeout);
       subscription.unsubscribe();
     };
-  }, [handleSession]);
+  }, [handleSession, addLog]);
 
   const signInWithKakao = useCallback(async () => {
     // Supabase JS 클라이언트 우회 - 직접 OAuth URL로 이동
