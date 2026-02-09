@@ -366,7 +366,7 @@ export default function Home() {
   // 로그인 전: LoginScreen 표시
   if (!isAuthenticated && !isUserLoading) {
     return <>
-      <LoginScreen onKakaoLogin={signInWithKakao} />
+      <LoginScreen />
       {debugPanel}
     </>;
   }
