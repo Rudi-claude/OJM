@@ -16,6 +16,23 @@ interface UseAuthReturn {
   updateNickname: (nickname: string) => Promise<boolean>;
 }
 
+// JWT 디코딩 (supabase.auth 완전 우회)
+function decodeJWT(token: string): Record<string, unknown> | null {
+  try {
+    const payload = token.split(".")[1];
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = atob(base64);
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+}
+
+const STORAGE_KEYS = {
+  ACCESS_TOKEN: "ojm_access_token",
+  REFRESH_TOKEN: "ojm_refresh_token",
+};
+
 export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,12 +41,18 @@ export function useAuth(): UseAuthReturn {
   const initializedRef = useRef(false);
 
   const addLog = useCallback((msg: string) => {
-    setDebugLog((prev) => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`]);
+    setDebugLog((prev) => [
+      ...prev,
+      `${new Date().toLocaleTimeString()}: ${msg}`,
+    ]);
   }, []);
 
   // users 테이블에 upsert (기존 닉네임이 있으면 유지)
   const upsertUser = useCallback(
-    async (authUser: { id: string; user_metadata: Record<string, unknown> }) => {
+    async (authUser: {
+      id: string;
+      user_metadata: Record<string, unknown>;
+    }) => {
       const kakaoName =
         (authUser.user_metadata?.full_name as string) ||
         (authUser.user_metadata?.name as string) ||
@@ -85,38 +108,59 @@ export function useAuth(): UseAuthReturn {
         };
       } catch (err) {
         console.error("upsertUser 실패:", err);
-        return { id: authUser.id, nickname: null, avatarUrl: null, kakaoName };
+        return {
+          id: authUser.id,
+          nickname: null,
+          avatarUrl: null,
+          kakaoName,
+        };
       }
     },
     []
   );
 
-  // 세션에서 사용자 로드
-  const handleSession = useCallback(
-    async (session: { user: { id: string; user_metadata: Record<string, unknown> } } | null) => {
-      try {
-        if (!session?.user) {
-          setUser(null);
-          setIsLoading(false);
-          return;
-        }
-
-        const sessionKakaoName =
-          (session.user.user_metadata?.full_name as string) ||
-          (session.user.user_metadata?.name as string) ||
-          null;
-        setKakaoName(sessionKakaoName);
-
-        const userData = await upsertUser(session.user);
-        setUser(userData);
-      } catch (err) {
-        console.error("handleSession 실패:", err);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
+  // JWT에서 사용자 정보 추출 후 로그인 처리
+  const loginFromToken = useCallback(
+    async (accessToken: string) => {
+      const payload = decodeJWT(accessToken);
+      if (!payload) {
+        addLog("JWT 디코딩 실패");
+        return false;
       }
+
+      // 토큰 만료 확인
+      const exp = payload.exp as number;
+      if (exp && Date.now() / 1000 > exp) {
+        addLog("토큰 만료됨");
+        return false;
+      }
+
+      const userId = payload.sub as string;
+      if (!userId) {
+        addLog("JWT에 사용자 ID 없음");
+        return false;
+      }
+
+      const userMetadata =
+        (payload.user_metadata as Record<string, unknown>) || {};
+
+      addLog(`JWT 디코딩 성공: ${userId.substring(0, 8)}...`);
+
+      const name =
+        (userMetadata.full_name as string) ||
+        (userMetadata.name as string) ||
+        null;
+      setKakaoName(name);
+
+      const userData = await upsertUser({
+        id: userId,
+        user_metadata: userMetadata,
+      });
+      setUser(userData);
+      addLog("로그인 성공");
+      return true;
     },
-    [upsertUser]
+    [upsertUser, addLog]
   );
 
   useEffect(() => {
@@ -128,41 +172,48 @@ export function useAuth(): UseAuthReturn {
         // 1. URL 해시에서 OAuth 토큰 확인 (카카오 로그인 후 리다이렉트)
         const hash = window.location.hash;
         if (hash && hash.includes("access_token")) {
-          addLog("URL에서 토큰 발견, setSession 시도");
+          addLog("URL에서 토큰 발견");
           const params = new URLSearchParams(hash.substring(1));
           const accessToken = params.get("access_token");
           const refreshToken = params.get("refresh_token");
 
-          if (accessToken && refreshToken) {
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
+          // URL 해시 제거
+          window.history.replaceState(null, "", window.location.pathname);
 
-            // URL 해시 제거
-            window.history.replaceState(null, "", window.location.pathname);
+          if (accessToken) {
+            // localStorage에 토큰 저장
+            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+            if (refreshToken) {
+              localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+            }
 
-            if (error) {
-              addLog(`setSession 실패: ${error.message}`);
-            } else if (data.session?.user) {
-              addLog("setSession 성공");
-              await handleSession(data.session);
+            const success = await loginFromToken(accessToken);
+            if (success) {
+              setIsLoading(false);
               return;
             }
           }
         }
 
-        // 2. 기존 세션 확인 (타임아웃 적용)
-        addLog("getSession 호출 시작");
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("2초 타임아웃")), 2000)
-        );
+        // 2. localStorage에서 저장된 토큰 확인
+        const storedToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        if (storedToken) {
+          addLog("저장된 토큰 발견");
+          const success = await loginFromToken(storedToken);
+          if (success) {
+            setIsLoading(false);
+            return;
+          }
+          // 실패 시 (만료 등) 토큰 제거
+          addLog("저장된 토큰 무효 - 제거");
+          localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+          localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+        }
 
-        const result = await Promise.race([sessionPromise, timeoutPromise]);
-        const session = (result as { data: { session: any } }).data.session;
-        addLog(`getSession 완료: ${session ? "세션 있음" : "세션 없음"}`);
-        await handleSession(session);
+        // 3. 세션 없음
+        addLog("세션 없음 - 로그인 필요");
+        setUser(null);
+        setIsLoading(false);
       } catch (err) {
         addLog(`초기화 실패: ${err}`);
         setUser(null);
@@ -171,28 +222,9 @@ export function useAuth(): UseAuthReturn {
     };
 
     init();
-
-    // 인증 상태 변경 리스너
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      addLog(`onAuthStateChange: ${event}`);
-      if (event === "SIGNED_IN" && session?.user) {
-        setIsLoading(true);
-        await handleSession(session);
-      } else if (event === "SIGNED_OUT") {
-        setUser(null);
-        setIsLoading(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [handleSession, addLog]);
+  }, [loginFromToken, addLog]);
 
   const signInWithKakao = useCallback(async () => {
-    // Supabase JS 클라이언트 우회 - 직접 OAuth URL로 이동
     const supabaseUrl = "https://xxhresiqpggsbkbrened.supabase.co";
     const redirectTo = encodeURIComponent(window.location.origin);
     const authUrl = `${supabaseUrl}/auth/v1/authorize?provider=kakao&redirect_to=${redirectTo}`;
@@ -200,20 +232,15 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const signOut = useCallback(async () => {
-    // Supabase 세션 정리 시도 (타임아웃 적용)
-    try {
-      await Promise.race([
-        supabase.auth.signOut(),
-        new Promise((_, reject) => setTimeout(() => reject("timeout"), 2000)),
-      ]);
-    } catch {
-      // signOut 실패해도 로컬 정리 진행
-    }
-    // 로컬 스토리지에서 Supabase 토큰 직접 제거
+    // 커스텀 토큰 제거
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    // Supabase 토큰도 제거
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith("sb-")) localStorage.removeItem(key);
     });
     setUser(null);
+    setKakaoName(null);
   }, []);
 
   const updateNickname = useCallback(
