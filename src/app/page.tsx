@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import SearchBar from '@/components/SearchBar';
 import CategoryFilter from '@/components/CategoryFilter';
 import RestaurantList from '@/components/RestaurantList';
@@ -173,6 +173,16 @@ export default function Home() {
       refreshTeam(user.id);
     }
   }, [user?.id, refreshTeam]);
+
+  // 팀 회사주소 자동 검색 (로그인 후 팀에 가입된 상태에서 주소가 있으면)
+  const autoSearchedRef = useRef(false);
+  useEffect(() => {
+    if (autoSearchedRef.current) return;
+    if (team?.address && allRestaurants.length === 0 && !isLoading) {
+      autoSearchedRef.current = true;
+      handleSearch(team.address);
+    }
+  }, [team?.address, allRestaurants.length, isLoading]);
 
   // 제외 목록 로드
   useEffect(() => {
