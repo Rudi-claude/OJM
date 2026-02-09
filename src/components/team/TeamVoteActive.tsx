@@ -168,7 +168,7 @@ export default function TeamVoteActive({ vote, userId, mapCenter, onCastVote, on
 
       {/* 액션 버튼 */}
       <div className="flex gap-2">
-        {isCreator && !isClosed && (
+        {!isClosed && (
           <button
             onClick={handleClose}
             className="flex-1 py-2.5 bg-red-50 text-red-500 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors"

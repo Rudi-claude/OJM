@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Restaurant, Team, TeamMember } from '@/types';
 import TeamHeader from './TeamHeader';
 import TeamMemberList from './TeamMemberList';
@@ -40,6 +40,7 @@ export default function TeamDashboard({
   onRenameTeam,
 }: TeamDashboardProps) {
   const [mode, setMode] = useState<TeamMode>('select');
+  const dismissedVoteIdRef = useRef<string | null>(null);
   const [showAddressInput, setShowAddressInput] = useState(false);
   const [addressInput, setAddressInput] = useState('');
   const [isAddressLoading, setIsAddressLoading] = useState(false);
@@ -89,11 +90,15 @@ export default function TeamDashboard({
 
   // 진행 중(open) 투표가 있으면 자동으로 투표 화면 표시
   useEffect(() => {
-    if (activeVote && activeVote.status === 'open' && mode === 'select') {
+    if (activeVote && activeVote.status === 'open' && mode === 'select' && dismissedVoteIdRef.current !== activeVote.id) {
       setMode('vote-active');
     }
     if (!activeVote && mode === 'vote-active') {
       setMode('select');
+    }
+    // 새 투표가 생기면 dismissed 초기화
+    if (activeVote && dismissedVoteIdRef.current && dismissedVoteIdRef.current !== activeVote.id) {
+      dismissedVoteIdRef.current = null;
     }
   }, [activeVote, mode]);
 
@@ -397,7 +402,10 @@ export default function TeamDashboard({
       {mode === 'vote-active' && activeVote && (
         <div>
           <button
-            onClick={() => setMode('select')}
+            onClick={() => {
+              dismissedVoteIdRef.current = activeVote.id;
+              setMode('select');
+            }}
             className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#6B77E8] mb-3 transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -218,8 +218,7 @@ export default function KakaoMap({ restaurants, center, selectedRestaurant }: Ka
       } else {
         setWalkingRoute(null);
       }
-    } catch (error) {
-      console.error('경로 조회 실패:', error);
+    } catch {
       setWalkingRoute(null);
     } finally {
       setIsRouteLoading(false);
@@ -258,7 +257,22 @@ export default function KakaoMap({ restaurants, center, selectedRestaurant }: Ka
 
     setWalkingRoute(null);
 
+    if (!selectedRestaurant) {
+      // 선택 해제 시 다른 식당 마커 다시 표시
+      markersRef.current.forEach((item) => {
+        if (item.marker) item.marker.setMap(map);
+      });
+      return;
+    }
+
     if (selectedRestaurant && selectedRestaurant.x && selectedRestaurant.y) {
+      // 다른 식당 마커 숨기기
+      markersRef.current.forEach((item) => {
+        if (item.marker) item.marker.setMap(null);
+        if (item.infowindow) item.infowindow.close();
+      });
+      currentInfowindowRef.current = null;
+
       // 도보 경로 가져오기
       fetchWalkingRoute();
 
