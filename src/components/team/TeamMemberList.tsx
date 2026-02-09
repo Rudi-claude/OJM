@@ -29,7 +29,7 @@ function getAvatarColor(index: number): string {
 
 export default function TeamMemberList({ members, currentUserId }: TeamMemberListProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1">
+    <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1 px-1">
       {members.map((member, index) => {
         const isMe = member.userId === currentUserId;
         return (
