@@ -9,6 +9,7 @@ import KakaoMap from '@/components/KakaoMap';
 import ChatContainer from '@/components/chat/ChatContainer';
 import WeatherBadge from '@/components/WeatherBadge';
 import LoginScreen from '@/components/LoginScreen';
+import MealHistory from '@/components/MealHistory';
 import NicknameModal from '@/components/team/NicknameModal';
 import TeamJoinCreate from '@/components/team/TeamJoinCreate';
 import TeamDashboard from '@/components/team/TeamDashboard';
@@ -21,7 +22,7 @@ import { useTeam } from '@/hooks/useTeam';
 import { useTeamSession } from '@/hooks/useTeamSession';
 
 type ModeType = 'roulette' | 'chat';
-type TabType = 'nearby' | 'favorites' | 'team';
+type TabType = 'nearby' | 'favorites' | 'history' | 'team';
 
 function NicknameEditForm({ currentNickname, onSubmit, onCancel }: {
   currentNickname: string;
@@ -540,6 +541,16 @@ export default function Home() {
               좋아요 {favoriteRestaurants.length > 0 && <span className="ml-1 text-xs bg-[#6B77E8] text-white px-1.5 py-0.5 rounded-full">{favoriteRestaurants.length}</span>}
             </button>
             <button
+              onClick={() => setActiveTab('history')}
+              className={`flex-1 py-2.5 text-sm font-medium text-center transition-colors ${
+                activeTab === 'history'
+                  ? 'text-[#6B77E8] border-b-2 border-[#6B77E8]'
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              식사내역
+            </button>
+            <button
               onClick={() => setActiveTab('team')}
               className={`flex-1 py-2.5 text-sm font-medium text-center transition-colors ${
                 activeTab === 'team'
@@ -604,6 +615,11 @@ export default function Home() {
               </div>
             )}
           </section>
+        )}
+
+        {/* 식사내역 탭 */}
+        {activeTab === 'history' && (
+          <MealHistory mealLogs={mealLogs} />
         )}
 
         {/* 주변 맛집 탭 */}
