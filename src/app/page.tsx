@@ -200,15 +200,29 @@ export default function Home() {
     })
     .map((log) => log.restaurantId);
 
+  // 이번 주 먹은 식당 ID (룰렛/AI에서 제외)
+  const thisWeekEatenIds = (() => {
+    const now = new Date();
+    const day = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((day + 6) % 7));
+    monday.setHours(0, 0, 0, 0);
+    return [...new Set(
+      mealLogs
+        .filter((log) => new Date(log.ateAt) >= monday)
+        .map((log) => log.restaurantId)
+    )];
+  })();
+
   // 토스트 표시
   const showToast = (message: string) => {
     setToast(message);
     setTimeout(() => setToast(null), 2000);
   };
 
-  // 제외 필터 적용된 식당 목록
+  // 제외 필터 적용된 식당 목록 (수동 제외 + 이번 주 먹은 식당)
   const getFilteredRestaurants = (list: Restaurant[]) => {
-    return list.filter((r) => !excludedIds.includes(r.id));
+    return list.filter((r) => !excludedIds.includes(r.id) && !thisWeekEatenIds.includes(r.id));
   };
 
   // 제외 목록 변경 핸들러
