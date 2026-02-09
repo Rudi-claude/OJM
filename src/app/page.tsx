@@ -13,6 +13,7 @@ import MealHistory from '@/components/MealHistory';
 import NicknameModal from '@/components/team/NicknameModal';
 import TeamJoinCreate from '@/components/team/TeamJoinCreate';
 import TeamDashboard from '@/components/team/TeamDashboard';
+import Onboarding, { shouldShowOnboarding } from '@/components/Onboarding';
 import { Restaurant, Category, WeatherData, MealLog, CandidateSource } from '@/types';
 import { addRecentAddress, getExcludes, clearExcludes } from '@/lib/storage';
 import { useAuth } from '@/hooks/useAuth';
@@ -117,6 +118,12 @@ export default function Home() {
   const [showMyInfo, setShowMyInfo] = useState(false);
   const [showNicknameEdit, setShowNicknameEdit] = useState(false);
 
+  // 온보딩
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    setShowOnboarding(shouldShowOnboarding());
+  }, []);
 
   // 토스트
   const [toast, setToast] = useState<string | null>(null);
@@ -500,6 +507,15 @@ export default function Home() {
     );
   }
 
+  // 온보딩
+  if (showOnboarding) {
+    return (
+      <div className="mobile-container">
+        <Onboarding onComplete={() => setShowOnboarding(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="mobile-container">
       <main className="min-h-screen bg-[#F8F9FC] flex flex-col">
@@ -722,7 +738,15 @@ export default function Home() {
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {error}
+              <span className="flex-1">{error}</span>
+              {searchedAddress && (
+                <button
+                  onClick={() => handleSearch(searchedAddress)}
+                  className="flex-shrink-0 px-2.5 py-1 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg font-medium transition-colors"
+                >
+                  재시도
+                </button>
+              )}
             </div>
           )}
         </section>
@@ -826,6 +850,17 @@ export default function Home() {
                     {restaurants.length}곳
                   </span>
                 </h2>
+                <button
+                  onClick={() => searchedAddress && handleSearch(searchedAddress)}
+                  disabled={isLoading}
+                  className="flex items-center gap-1 text-xs text-[#6B77E8] hover:text-[#5A66D6] font-medium disabled:opacity-50 transition-colors"
+                  title="새로고침"
+                >
+                  <svg className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  새로고침
+                </button>
               </div>
               <RestaurantList
                 restaurants={restaurants}
@@ -875,9 +910,18 @@ export default function Home() {
           <section className="text-center py-12">
             <div className="text-5xl mb-4">🏢</div>
             <h2 className="text-lg font-bold text-gray-800 mb-1.5">회사 주소를 검색해주세요</h2>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-400 mb-6">
               주소 검색 후 주변 맛집을 추천받을 수 있어요
             </p>
+            <div className="flex flex-col gap-2 items-center">
+              <div className="flex gap-3 text-xs text-gray-400">
+                <span className="flex items-center gap-1">🎰 룰렛</span>
+                <span className="text-gray-200">|</span>
+                <span className="flex items-center gap-1">🤖 AI 추천</span>
+                <span className="text-gray-200">|</span>
+                <span className="flex items-center gap-1">👥 팀 투표</span>
+              </div>
+            </div>
           </section>
         )}
         </>}
