@@ -5,13 +5,8 @@ const KAKAO_API_URL = 'https://dapi.kakao.com/v2/local';
 
 // 주소를 좌표로 변환
 async function addressToCoords(address: string) {
-  console.log('=== 주소 검색 시작 ===');
-  console.log('검색 주소:', address);
-  console.log('API 키:', KAKAO_API_KEY ? `${KAKAO_API_KEY.substring(0, 5)}...` : '없음');
-
   // 주소 검색 시도
   const addressUrl = `${KAKAO_API_URL}/search/address.json?query=${encodeURIComponent(address)}`;
-  console.log('주소 검색 URL:', addressUrl);
 
   const addressResponse = await fetch(addressUrl, {
     headers: {
@@ -20,7 +15,6 @@ async function addressToCoords(address: string) {
   });
 
   const addressData = await addressResponse.json();
-  console.log('주소 검색 응답:', JSON.stringify(addressData, null, 2));
 
   if (addressData.documents && addressData.documents.length > 0) {
     return {
@@ -31,7 +25,6 @@ async function addressToCoords(address: string) {
 
   // 주소 검색 실패시 키워드 검색 시도
   const keywordUrl = `${KAKAO_API_URL}/search/keyword.json?query=${encodeURIComponent(address)}`;
-  console.log('키워드 검색 URL:', keywordUrl);
 
   const keywordResponse = await fetch(keywordUrl, {
     headers: {
@@ -40,7 +33,6 @@ async function addressToCoords(address: string) {
   });
 
   const keywordData = await keywordResponse.json();
-  console.log('키워드 검색 응답:', JSON.stringify(keywordData, null, 2));
 
   if (keywordData.documents && keywordData.documents.length > 0) {
     return {
@@ -93,7 +85,6 @@ async function searchRestaurants(x: string, y: string, radius: number = 500) {
   // 카카오 API는 페이지당 최대 15개, 최대 3페이지(45개)
   for (let page = 1; page <= 3; page++) {
     const url = `${KAKAO_API_URL}/search/category.json?category_group_code=FD6&x=${x}&y=${y}&radius=${radius}&sort=distance&page=${page}&size=15`;
-    console.log(`음식점 검색 (page ${page}):`, url);
 
     const response = await fetch(url, {
       headers: {
@@ -103,7 +94,6 @@ async function searchRestaurants(x: string, y: string, radius: number = 500) {
 
     const data = await response.json();
     const docs = data.documents || [];
-    console.log(`페이지 ${page} 결과 수:`, docs.length);
 
     for (const place of docs) {
       if (!seenIds.has(place.id)) {
@@ -119,14 +109,12 @@ async function searchRestaurants(x: string, y: string, radius: number = 500) {
     if (data.meta?.is_end) break;
   }
 
-  console.log('음식점 검색 총 결과 수:', allPlaces.length);
   return allPlaces;
 }
 
 // 좌표를 주소로 변환 (역지오코딩)
 async function coordsToAddress(x: string, y: string): Promise<string> {
   const url = `${KAKAO_API_URL}/geo/coord2address.json?x=${x}&y=${y}`;
-  console.log('역지오코딩 URL:', url);
 
   try {
     const response = await fetch(url, {
@@ -136,7 +124,6 @@ async function coordsToAddress(x: string, y: string): Promise<string> {
     });
 
     const data = await response.json();
-    console.log('역지오코딩 응답:', JSON.stringify(data, null, 2));
 
     if (data.documents && data.documents.length > 0) {
       const doc = data.documents[0];
@@ -148,8 +135,8 @@ async function coordsToAddress(x: string, y: string): Promise<string> {
         return doc.address.address_name;
       }
     }
-  } catch (error) {
-    console.error('역지오코딩 오류:', error);
+  } catch {
+    // 역지오코딩 실패 시 기본값
   }
 
   return '현재 위치';
@@ -193,18 +180,11 @@ export async function GET(request: NextRequest) {
   const keyword = searchParams.get('keyword');
   const radius = parseInt(searchParams.get('radius') || '500');
 
-  console.log('\n========== API 요청 시작 ==========');
-  console.log('요청 주소:', address);
-  console.log('좌표:', lat, lng);
-  console.log('키워드:', keyword);
-  console.log('검색 반경:', radius);
-
   if (!address && (!lat || !lng) && !keyword) {
     return NextResponse.json({ error: '주소, 좌표 또는 키워드를 입력해주세요.' }, { status: 400 });
   }
 
   if (!KAKAO_API_KEY) {
-    console.log('ERROR: API 키가 없습니다!');
     return NextResponse.json({ error: 'API 키가 설정되지 않았습니다.' }, { status: 500 });
   }
 
@@ -228,21 +208,17 @@ export async function GET(request: NextRequest) {
       x = lng;
       y = lat;
       resolvedAddress = await coordsToAddress(x, y);
-      console.log('역지오코딩 주소:', resolvedAddress);
     } else {
       // 주소 검색
       const coords = await addressToCoords(address!);
 
       if (!coords) {
-        console.log('ERROR: 좌표 변환 실패');
         return NextResponse.json({ error: '주소를 찾을 수 없습니다.' }, { status: 404 });
       }
 
       x = coords.x;
       y = coords.y;
     }
-
-    console.log('좌표:', { x, y });
 
     // 주변 음식점 검색 (20개 미만이면 반경 자동 확장)
     const MIN_RESULTS = 20;
@@ -255,13 +231,9 @@ export async function GET(request: NextRequest) {
       restaurants = await searchRestaurants(x, y, r);
       usedRadius = r;
       if (restaurants.length >= MIN_RESULTS) break;
-      console.log(`반경 ${r}m 결과 ${restaurants.length}개 (${MIN_RESULTS}개 미만), 확장 시도...`);
     }
 
     const expanded = usedRadius > radius;
-    console.log('검색된 음식점 수:', restaurants.length);
-    if (expanded) console.log(`반경 ${radius}m → ${usedRadius}m 확장`);
-    console.log('========== API 요청 완료 ==========\n');
 
     return NextResponse.json({
       success: true,
@@ -274,8 +246,7 @@ export async function GET(request: NextRequest) {
       ...(resolvedAddress && { address: resolvedAddress }),
       ...(expanded && { expandedRadius: usedRadius }),
     });
-  } catch (error) {
-    console.error('API 오류:', error);
+  } catch {
     return NextResponse.json({ error: '검색 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }

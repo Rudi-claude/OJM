@@ -87,8 +87,7 @@ export async function POST(request: NextRequest) {
         mood,
       },
     });
-  } catch (error) {
-    console.error("추천 API 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "추천을 생성할 수 없습니다." },
       { status: 500 }

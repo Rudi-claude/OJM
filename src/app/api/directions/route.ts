@@ -40,11 +40,7 @@ export async function POST(request: NextRequest) {
 
     const TMAP_APP_KEY = process.env.TMAP_APP_KEY;
 
-    console.log("Tmap API 요청 시작:", { startX, startY, endX, endY });
-    console.log("API Key 존재 여부:", !!TMAP_APP_KEY);
-
     if (!TMAP_APP_KEY) {
-      console.error("TMAP_APP_KEY 환경변수가 없습니다.");
       return NextResponse.json(
         { error: "Tmap API 키가 설정되지 않았습니다.", success: false },
         { status: 500 }
@@ -70,8 +66,6 @@ export async function POST(request: NextRequest) {
       searchOption: "0",
     };
 
-    console.log("Tmap 요청 바디:", requestBody);
-
     const response = await fetch(TMAP_API_URL, {
       method: "POST",
       headers: {
@@ -81,11 +75,8 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(requestBody),
     });
 
-    console.log("Tmap 응답 상태:", response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Tmap API 오류 응답:", response.status, errorText);
       return NextResponse.json(
         { error: `Tmap API 오류: ${response.status}`, details: errorText, success: false },
         { status: response.status }
@@ -93,7 +84,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data: TmapResponse = await response.json();
-    console.log("Tmap 응답 features 수:", data.features?.length);
 
     // 경로 좌표 추출
     const routeCoordinates: { lat: number; lng: number }[] = [];
@@ -121,9 +111,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.log("추출된 좌표 수:", routeCoordinates.length);
-    console.log("총 거리:", totalDistance, "총 시간:", totalTime);
-
     return NextResponse.json({
       success: true,
       route: routeCoordinates,
@@ -131,8 +118,7 @@ export async function POST(request: NextRequest) {
       totalTime,
       totalTimeMinutes: Math.ceil(totalTime / 60),
     });
-  } catch (error) {
-    console.error("경로 API 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "경로 조회 중 오류가 발생했습니다.", success: false },
       { status: 500 }

@@ -84,7 +84,6 @@ export function useAuth(): UseAuthReturn {
           .single();
 
         if (error) {
-          console.error("사용자 insert 실패:", error);
           return { id: authUser.id, nickname: null, avatarUrl, kakaoName };
         }
 
@@ -94,8 +93,7 @@ export function useAuth(): UseAuthReturn {
           avatarUrl: data.avatar_url,
           kakaoName,
         };
-      } catch (err) {
-        console.error("upsertUser 실패:", err);
+      } catch {
         return {
           id: authUser.id,
           nickname: null,
@@ -184,8 +182,7 @@ export function useAuth(): UseAuthReturn {
         // 3. 세션 없음
         setUser(null);
         setIsLoading(false);
-      } catch (err) {
-        console.error("auth 초기화 실패:", err);
+      } catch {
         setUser(null);
         setIsLoading(false);
       }
@@ -225,11 +222,9 @@ export function useAuth(): UseAuthReturn {
           .eq("id", user.id);
 
         if (error) {
-          console.error("닉네임 DB 업데이트 실패:", error);
         }
         return true;
-      } catch (err) {
-        console.error("닉네임 업데이트 실패:", err);
+      } catch {
         return true;
       }
     },

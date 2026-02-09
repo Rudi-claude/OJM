@@ -33,7 +33,6 @@ export function useTeam() {
       .order("joined_at", { ascending: true });
 
     if (fetchError) {
-      console.error("멤버 조회 실패:", fetchError);
       return;
     }
 
@@ -87,8 +86,7 @@ export function useTeam() {
         setCurrentTeam({ id: newTeam.id, name: newTeam.name, code: newTeam.code });
         await fetchMembers(newTeam.id);
         return newTeam;
-      } catch (err) {
-        console.error("팀 생성 실패:", err);
+      } catch {
         setError("팀 생성에 실패했어요. 다시 시도해주세요.");
         return null;
       } finally {
@@ -147,8 +145,7 @@ export function useTeam() {
         setCurrentTeam({ id: joinedTeam.id, name: joinedTeam.name, code: joinedTeam.code });
         await fetchMembers(joinedTeam.id);
         return joinedTeam;
-      } catch (err) {
-        console.error("팀 참여 실패:", err);
+      } catch {
         setError("팀 참여에 실패했어요. 다시 시도해주세요.");
         return null;
       } finally {
@@ -175,8 +172,7 @@ export function useTeam() {
         setMembers([]);
         removeCurrentTeam();
         return true;
-      } catch (err) {
-        console.error("팀 나가기 실패:", err);
+      } catch {
         return false;
       } finally {
         setIsLoading(false);
@@ -228,8 +224,7 @@ export function useTeam() {
         setTeam(verified);
         setCurrentTeam({ id: verified.id, name: verified.name, code: verified.code });
         await fetchMembers(verified.id);
-      } catch (err) {
-        console.error("팀 정보 갱신 실패:", err);
+      } catch {
         removeCurrentTeam();
         setTeam(null);
         setMembers([]);
@@ -254,8 +249,7 @@ export function useTeam() {
           prev ? { ...prev, address, addressLat: lat, addressLng: lng } : null
         );
         return true;
-      } catch (err) {
-        console.error("팀 주소 업데이트 실패:", err);
+      } catch {
         return false;
       }
     },
@@ -278,8 +272,7 @@ export function useTeam() {
           setCurrentTeam({ ...stored, name });
         }
         return true;
-      } catch (err) {
-        console.error("팀 이름 변경 실패:", err);
+      } catch {
         return false;
       }
     },

@@ -75,8 +75,7 @@ export function useTeamSession() {
       }));
 
       setCandidates(mapped);
-    } catch (err) {
-      console.error("세션 조회 실패:", err);
+    } catch {
       setSession(null);
       setCandidates([]);
     } finally {
@@ -118,8 +117,7 @@ export function useTeamSession() {
         setSession(newSession);
         setCandidates([]);
         return newSession;
-      } catch (err) {
-        console.error("세션 시작 실패:", err);
+      } catch {
         return null;
       } finally {
         setIsLoading(false);
@@ -138,8 +136,7 @@ export function useTeamSession() {
 
         if (error) throw error;
         return true;
-      } catch (err) {
-        console.error("세션 상태 변경 실패:", err);
+      } catch {
         return false;
       }
     },
@@ -158,8 +155,7 @@ export function useTeamSession() {
         setSession(null);
         setCandidates([]);
         return true;
-      } catch (err) {
-        console.error("세션 종료 실패:", err);
+      } catch {
         return false;
       }
     },
@@ -198,8 +194,7 @@ export function useTeamSession() {
           throw error;
         }
         return true;
-      } catch (err) {
-        console.error("후보 추가 실패:", err);
+      } catch {
         return false;
       }
     },
@@ -241,8 +236,7 @@ export function useTeamSession() {
 
         const success = await addCandidate(sessionId, restaurant, userId, source);
         return { success, isNew };
-      } catch (err) {
-        console.error("세션 확보 및 후보 추가 실패:", err);
+      } catch {
         return { success: false, isNew: false };
       }
     },
@@ -259,8 +253,7 @@ export function useTeamSession() {
 
         if (error) throw error;
         return true;
-      } catch (err) {
-        console.error("후보 삭제 실패:", err);
+      } catch {
         return false;
       }
     },

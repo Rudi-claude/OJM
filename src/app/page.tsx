@@ -218,7 +218,7 @@ export default function Home() {
   // 토스트 표시
   const showToast = (message: string) => {
     setToast(message);
-    setTimeout(() => setToast(null), 2000);
+    setTimeout(() => setToast(null), 3000);
   };
 
   // 제외 필터 적용된 식당 목록 (수동 제외 + 이번 주 먹은 식당)
@@ -648,7 +648,9 @@ export default function Home() {
                   restaurants={favoriteRestaurants}
                   onFavoriteToggle={handleFavoriteToggle}
                   favoriteIds={favoriteIds}
+                  excludedIds={excludedIds}
                   onExcludeChange={handleExcludeChange}
+                  onMealLog={handleMealLog}
                   onTeamCandidate={canAddTeamCandidate ? (r) => handleAddTeamCandidate(r, 'manual') : undefined}
                 />
               </div>

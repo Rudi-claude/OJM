@@ -79,8 +79,7 @@ export function useTeamVote() {
           options,
           createdAt: voteData.created_at,
         });
-      } catch (err) {
-        console.error("투표 조회 실패:", err);
+      } catch {
         setActiveVote(null);
       } finally {
         setIsLoading(false);
@@ -152,8 +151,7 @@ export function useTeamVote() {
 
         setActiveVote(vote);
         return vote;
-      } catch (err) {
-        console.error("투표 생성 실패:", err);
+      } catch {
         return null;
       } finally {
         setIsLoading(false);
@@ -179,8 +177,7 @@ export function useTeamVote() {
 
         if (insertError) throw insertError;
         return true;
-      } catch (err) {
-        console.error("투표 실패:", err);
+      } catch {
         return false;
       }
     },
@@ -198,8 +195,7 @@ export function useTeamVote() {
         if (updateError) throw updateError;
         setActiveVote((prev) => prev ? { ...prev, status: 'closed' } : null);
         return true;
-      } catch (err) {
-        console.error("투표 마감 실패:", err);
+      } catch {
         return false;
       }
     },

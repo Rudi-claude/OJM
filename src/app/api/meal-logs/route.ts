@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
       .order("ate_at", { ascending: false });
 
     if (error) {
-      console.error("식사 기록 조회 실패:", error);
       return NextResponse.json(
         { error: "식사 기록을 조회할 수 없습니다." },
         { status: 500 }
@@ -46,8 +45,7 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ mealLogs });
-  } catch (error) {
-    console.error("API 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다." },
       { status: 500 }
@@ -82,7 +80,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("식사 기록 저장 실패:", error);
       return NextResponse.json(
         { error: "식사 기록을 저장할 수 없습니다." },
         { status: 500 }
@@ -102,8 +99,7 @@ export async function POST(request: NextRequest) {
         mood: mealLog.mood,
       },
     });
-  } catch (error) {
-    console.error("API 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다." },
       { status: 500 }
@@ -129,7 +125,6 @@ export async function DELETE(request: NextRequest) {
       .eq("id", id);
 
     if (error) {
-      console.error("식사 기록 삭제 실패:", error);
       return NextResponse.json(
         { error: "식사 기록을 삭제할 수 없습니다." },
         { status: 500 }
@@ -137,8 +132,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("API 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다." },
       { status: 500 }

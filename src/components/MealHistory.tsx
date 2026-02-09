@@ -154,7 +154,7 @@ export default function MealHistory({ mealLogs, onDelete }: MealHistoryProps) {
               <div className="text-lg font-bold text-[#6B77E8]">
                 {mealLogs.filter(l => {
                   const d = new Date(l.ateAt);
-                  return d >= weekDays[0] && d <= new Date(weekDays[6].getTime() + 86400000);
+                  return d >= weekDays[0] && d <= (() => { const d = new Date(weekDays[6]); d.setDate(d.getDate() + 1); return d; })();
                 }).length}
               </div>
               <div className="text-[10px] text-gray-400">총 식사</div>
@@ -165,7 +165,7 @@ export default function MealHistory({ mealLogs, onDelete }: MealHistoryProps) {
                   const cats = new Set(mealLogs
                     .filter(l => {
                       const d = new Date(l.ateAt);
-                      return d >= weekDays[0] && d <= new Date(weekDays[6].getTime() + 86400000);
+                      return d >= weekDays[0] && d <= (() => { const d = new Date(weekDays[6]); d.setDate(d.getDate() + 1); return d; })();
                     })
                     .map(l => l.category));
                   return cats.size;

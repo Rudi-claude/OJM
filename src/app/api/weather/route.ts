@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
 
     // API 키가 없으면 기본값 반환
     if (!KMA_API_KEY) {
-      console.warn("KMA_API_KEY가 설정되지 않았습니다. 기본 날씨 정보를 반환합니다.");
       return NextResponse.json({
         weather: createWeatherData(1, 0, 20),
         source: "default",
@@ -55,7 +54,6 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     if (data.response?.header?.resultCode !== "00") {
-      console.error("기상청 API 오류:", data.response?.header?.resultMsg);
       return NextResponse.json({
         weather: createWeatherData(1, 0, 20),
         source: "fallback",
@@ -91,7 +89,6 @@ export async function GET(request: NextRequest) {
       grid: { nx, ny },
     });
   } catch (error) {
-    console.error("날씨 API 오류:", error);
     return NextResponse.json({
       weather: createWeatherData(1, 0, 20),
       source: "error",

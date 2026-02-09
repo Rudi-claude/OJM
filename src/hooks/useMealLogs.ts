@@ -55,7 +55,6 @@ export function useMealLogs(): UseMealLogsReturn {
         }))
       );
     } catch (err) {
-      console.error("식사 기록 조회 실패:", err);
       setError(
         err instanceof Error ? err.message : "식사 기록을 불러올 수 없습니다."
       );
@@ -92,7 +91,6 @@ export function useMealLogs(): UseMealLogsReturn {
         setMealLogs((prev) => [newLog, ...prev]);
         return true;
       } catch (err) {
-        console.error("식사 기록 저장 실패:", err);
         setError(
           err instanceof Error ? err.message : "식사 기록을 저장할 수 없습니다."
         );
@@ -116,8 +114,7 @@ export function useMealLogs(): UseMealLogsReturn {
 
       setMealLogs((prev) => prev.filter((log) => log.id !== id));
       return true;
-    } catch (err) {
-      console.error("식사 기록 삭제 실패:", err);
+    } catch {
       return false;
     }
   }, []);

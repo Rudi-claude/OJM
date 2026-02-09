@@ -38,7 +38,6 @@ export function useFavorites(userId: string | undefined): UseFavoritesReturn {
         .order("added_at", { ascending: false });
 
       if (error) {
-        console.error("즐겨찾기 로드 실패:", error);
         setFavorites([]);
       } else {
         const rows = (data || []) as FavoriteRow[];
@@ -57,8 +56,7 @@ export function useFavorites(userId: string | undefined): UseFavoritesReturn {
           }))
         );
       }
-    } catch (err) {
-      console.error("즐겨찾기 로드 실패:", err);
+    } catch {
       setFavorites([]);
     } finally {
       setIsLoading(false);
