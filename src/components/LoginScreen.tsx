@@ -1,10 +1,16 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 const SUPABASE_URL = "https://xxhresiqpggsbkbrened.supabase.co";
 
 export default function LoginScreen() {
-  const redirectTo = typeof window !== 'undefined' ? encodeURIComponent(window.location.origin) : '';
-  const authUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=kakao&redirect_to=${redirectTo}`;
+  const [authUrl, setAuthUrl] = useState('');
+
+  useEffect(() => {
+    const redirectTo = encodeURIComponent(window.location.origin);
+    setAuthUrl(`${SUPABASE_URL}/auth/v1/authorize?provider=kakao&redirect_to=${redirectTo}`);
+  }, []);
 
   return (
     <div className="mobile-container">
@@ -25,8 +31,9 @@ export default function LoginScreen() {
 
           {/* 카카오 로그인 버튼 - <a> 태그로 직접 이동 */}
           <a
-            href={authUrl}
-            className="w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 no-underline"
+            href={authUrl || '#'}
+            onClick={(e) => { if (!authUrl) e.preventDefault(); }}
+            className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 no-underline ${!authUrl ? 'opacity-50' : ''}`}
             style={{ backgroundColor: '#FEE500', color: '#000000' }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -43,6 +50,11 @@ export default function LoginScreen() {
           <p className="text-xs text-gray-300 mt-4">
             간편하게 로그인하고 팀원들과 함께 점심을 정해보세요
           </p>
+          {authUrl && (
+            <p className="text-[9px] text-gray-300 mt-2 break-all">
+              {authUrl}
+            </p>
+          )}
         </div>
       </main>
     </div>
