@@ -262,7 +262,7 @@ export default function TeamDashboard({
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-              <span>📋</span> 후보 목록
+              <span>📋</span> 금일 후보 목록
               <span className="text-xs font-normal text-[#8B95FF]">({candidates.length}개)</span>
             </h3>
           </div>
